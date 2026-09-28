@@ -26,7 +26,7 @@
               <div class="model-grid">
                 <div class="model-column"><h2>◉ Model A</h2><label>Model<select><option>Select a model...</option><option>GPT-4o</option><option>Claude 3.5 Sonnet</option><option>Gemini 1.5 Pro</option></select></label><label>Role<select><option>Select a role...</option><option>Researcher</option><option>Critic</option><option>Planner</option></select></label><label>Display Name (optional)<input placeholder="e.g. Proposer" /></label></div>
                 <div class="model-column"><h2>◉ Model B</h2><label>Model<select><option>Select a model...</option><option>Claude 3.5 Sonnet</option><option>GPT-4o</option><option>Gemini 1.5 Pro</option></select></label><label>Role<select><option>Select a role...</option><option>Critic</option><option>Researcher</option><option>Planner</option></select></label><label>Display Name (optional)<input placeholder="e.g. Critic" /></label></div>
-                <div class="run-column"><h2>⚙ Run Settings</h2><label>Turn Limit<input type="number" value="6" min="1" max="20" /></label><label>Mode (optional)<select><option>Cooperative Task</option><option>Debate</option><option>Brainstorm</option></select></label><label>Initial Prompt<textarea placeholder="Enter your prompt here..."></textarea></label></div>
+                <div class="run-column"><h2>⚙ Run Settings</h2><label>Turn Limit<input id="turn-limit" type="number" value="6" min="1" max="20" /></label><label>Mode (optional)<select><option>Cooperative Task</option><option>Debate</option><option>Brainstorm</option></select></label><label>Initial Prompt<textarea id="initial-prompt" placeholder="Enter your prompt here..."></textarea></label></div>
               </div>
               <button class="primary full" id="start-run">Start Run</button>
             </div>
@@ -35,7 +35,7 @@
         </section>
 
         <section id="conversation-screen" class="screen">
-          <div class="page-heading conversation-heading"><h1>Conversation</h1><p>◌ Run in progress... &nbsp; (Turn 3 of 6)</p></div>
+          <div class="page-heading conversation-heading"><h1>Conversation</h1><p id="turn-status">Run in progress...</p></div>
           <div class="conversation-layout"><div class="panel thread-panel"><div class="messages" id="messages"></div><div class="composer"><input id="message-input" placeholder="Add a message (optional)..." /><button class="primary" id="send-message">Send ↗</button></div><div class="thread-controls"><button>Ⅱ&nbsp; Pause</button><button class="danger">□&nbsp; Stop</button><span>◌ Model A is responding...</span></div></div><aside class="panel details-panel"><h2>Run Details</h2><dl><dt>Mode</dt><dd>Cooperative Task</dd><dt>Turn Count</dt><dd>3 / 6</dd><dt>Status</dt><dd class="status">● Running</dd></dl><h2 class="subhead">Models</h2><div class="model-card"><b>●</b><span>Model A<small>(Proposer)</small></span></div><div class="model-card"><b>●</b><span>Model B<small>(Critic)</small></span></div></aside></div>
         </section>
 
