@@ -21,3 +21,4 @@ The browser calls POST /api/run, and the Python server alternates between Model 
 - agents.py - mock Model A and Model B implementations
 - requirements.txt - Python dependencies
 - assets/ - reserved for future icons or imagery
+- wireframes/ - wireframes for the website

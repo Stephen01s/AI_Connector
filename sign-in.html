@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Vellum</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Vellum home"><span class="brand-mark">◈</span> vellum</div>
+      <nav class="nav-links" aria-label="Main navigation">
+        <button type="button" data-page="index.html">⌂&nbsp; Home</button>
+        <button type="button" data-page="runs.html">◌&nbsp; Runs</button>
+        <button type="button" data-page="index.html">♧&nbsp; Community</button>
+      </nav>
+      <button class="sign-in" type="button">Sign In</button>
+    </header>
+    <main class="auth-main">
+      <section class="auth-card" aria-labelledby="auth-title">
+        <div class="auth-brand"><span class="brand-mark">◈</span> vellum</div>
+        <p class="auth-eyebrow">YOUR WORKSPACE</p>
+        <h1 id="auth-title">Welcome back</h1>
+        <p class="auth-description">Sign in to continue to your collaborative runs.</p>
+        <form id="sign-in-form">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" required placeholder="Enter your username" />
+          <button class="primary auth-submit" id="submit-sign-in" type="submit">Continue</button>
+        </form>
+        <p id="sign-in-status" class="auth-status" role="status" aria-live="polite"></p>
+        <p class="auth-footnote">Use a username with an existing Vellum profile.</p>
+      </section>
+    </main>
+    <footer>Made with <span>◈</span> Vellum</footer>
+  </div>
+  <script type="module" src="sign-in.js"></script>
+</body>
+</html>
