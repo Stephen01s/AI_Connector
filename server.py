@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from agents import AgentA, AgentB
 
 
-app = FastAPI(title="Vellum Two-Agent Prototype")
+app = FastAPI(title="Two-Agent Prototype")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
