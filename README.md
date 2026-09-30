@@ -1,4 +1,4 @@
-# Vellum Run Prototype
+# AI Connector
 
 This prototype includes a small Python API that runs a feedback loop between
 two mock agents.
