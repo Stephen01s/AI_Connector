@@ -1,51 +1,140 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vellum — Collaborative Runs</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div class="brand" aria-label="Vellum home"><span class="brand-mark">◈</span> vellum</div>
-        <nav class="nav-links" aria-label="Main navigation">
-          <button data-nav="home">⌂&nbsp; Home</button>
-          <button data-nav="runs">◌&nbsp; Runs</button>
-          <button data-nav="community">♧&nbsp; Community</button>
-        </nav>
-        <button class="sign-in">Sign In</button>
-      </header>
 
-      <main>
-        <section id="setup-screen" class="screen active">
-          <div class="page-heading"><h1>Configure your Run</h1><p>Choose how models, their roles, and enter an initial prompt to start a conversation.</p></div>
-          <div class="setup-layout">
-            <div class="panel config-panel">
-              <div class="model-grid">
-                <div class="model-column"><h2>◉ Model A</h2><label>Model<select><option>Select a model...</option><option>GPT-4o</option><option>Claude 3.5 Sonnet</option><option>Gemini 1.5 Pro</option></select></label><label>Role<select><option>Select a role...</option><option>Researcher</option><option>Critic</option><option>Planner</option></select></label><label>Display Name (optional)<input placeholder="e.g. Proposer" /></label></div>
-                <div class="model-column"><h2>◉ Model B</h2><label>Model<select><option>Select a model...</option><option>Claude 3.5 Sonnet</option><option>GPT-4o</option><option>Gemini 1.5 Pro</option></select></label><label>Role<select><option>Select a role...</option><option>Critic</option><option>Researcher</option><option>Planner</option></select></label><label>Display Name (optional)<input placeholder="e.g. Critic" /></label></div>
-                <div class="run-column"><h2>⚙ Run Settings</h2><label>Turn Limit<input id="turn-limit" type="number" value="6" min="1" max="20" /></label><label>Mode (optional)<select><option>Cooperative Task</option><option>Debate</option><option>Brainstorm</option></select></label><label>Initial Prompt<textarea id="initial-prompt" placeholder="Enter your prompt here..."></textarea></label></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vellum — Collaborative Runs</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Vellum home"><span class="brand-mark">◈</span> vellum</div>
+      <nav class="nav-links" aria-label="Main navigation">
+        <button data-nav="home">⌂&nbsp; Home</button>
+        <button data-nav="runs">◌&nbsp; Runs</button>
+        <button data-nav="community">♧&nbsp; Community</button>
+      </nav>
+      <button class="sign-in" id="sign-in-nav">Sign In</button>
+    </header>
+
+    <main>
+      <section id="setup-screen" class="screen active">
+        <div class="page-heading">
+          <h1>Configure your Run</h1>
+          <p>Choose how models, their roles, and enter an initial prompt to start a conversation.</p>
+        </div>
+        <div class="setup-layout">
+          <div class="panel config-panel">
+            <div class="model-grid">
+              <div class="model-column">
+                <h2>◉ Model A</h2><label>Model<select>
+                    <option>Select a model...</option>
+                    <option>GPT-4o</option>
+                    <option>Claude 3.5 Sonnet</option>
+                    <option>Gemini 1.5 Pro</option>
+                  </select></label><label>Role<select>
+                    <option>Select a role...</option>
+                    <option>Researcher</option>
+                    <option>Critic</option>
+                    <option>Planner</option>
+                  </select></label><label>Display Name (optional)<input placeholder="e.g. Proposer" /></label>
               </div>
-              <button class="primary full" id="start-run">Start Run</button>
+              <div class="model-column">
+                <h2>◉ Model B</h2><label>Model<select>
+                    <option>Select a model...</option>
+                    <option>Claude 3.5 Sonnet</option>
+                    <option>GPT-4o</option>
+                    <option>Gemini 1.5 Pro</option>
+                  </select></label><label>Role<select>
+                    <option>Select a role...</option>
+                    <option>Critic</option>
+                    <option>Researcher</option>
+                    <option>Planner</option>
+                  </select></label><label>Display Name (optional)<input placeholder="e.g. Critic" /></label>
+              </div>
+              <div class="run-column">
+                <h2>⚙ Run Settings</h2><label>Turn Limit<input id="turn-limit" type="number" value="6" min="1"
+                    max="20" /></label><label>Mode (optional)<select>
+                    <option>Cooperative Task</option>
+                    <option>Debate</option>
+                    <option>Brainstorm</option>
+                  </select></label><label>Initial Prompt<textarea id="initial-prompt"
+                    placeholder="Enter your prompt here..."></textarea></label>
+              </div>
             </div>
-            <aside class="panel prompt-ideas"><h2>Prompt Ideas</h2><div class="ideas-content"></div></aside>
+            <button class="primary full" id="start-run">Start Run</button>
           </div>
-        </section>
+          <aside class="panel prompt-ideas">
+            <h2>Prompt Ideas</h2>
+            <div class="ideas-content"></div>
+          </aside>
+        </div>
+      </section>
 
-        <section id="conversation-screen" class="screen">
-          <div class="page-heading conversation-heading"><h1>Conversation</h1><p id="turn-status">Run in progress...</p></div>
-          <div class="conversation-layout"><div class="panel thread-panel"><div class="messages" id="messages"></div><div class="composer"><input id="message-input" placeholder="Add a message (optional)..." /><button class="primary" id="send-message">Send ↗</button></div><div class="thread-controls"><button>Ⅱ&nbsp; Pause</button><button class="danger">□&nbsp; Stop</button><span>◌ Model A is responding...</span></div></div><aside class="panel details-panel"><h2>Run Details</h2><dl><dt>Mode</dt><dd>Cooperative Task</dd><dt>Turn Count</dt><dd>3 / 6</dd><dt>Status</dt><dd class="status">● Running</dd></dl><h2 class="subhead">Models</h2><div class="model-card"><b>●</b><span>Model A<small>(Proposer)</small></span></div><div class="model-card"><b>●</b><span>Model B<small>(Critic)</small></span></div></aside></div>
-        </section>
+      <section id="conversation-screen" class="screen">
+        <div class="page-heading conversation-heading">
+          <h1>Conversation</h1>
+          <p id="turn-status">Run in progress...</p>
+        </div>
+        <div class="conversation-layout">
+          <div class="panel thread-panel">
+            <div class="messages" id="messages"></div>
+            <div class="composer"><input id="message-input" placeholder="Add a message (optional)..." /><button
+                class="primary" id="send-message">Send ↗</button></div>
+            <div class="thread-controls"><button>Ⅱ&nbsp; Pause</button><button class="danger">□&nbsp;
+                Stop</button><span>◌ Model A is responding...</span></div>
+          </div>
+          <aside class="panel details-panel">
+            <h2>Run Details</h2>
+            <dl>
+              <dt>Mode</dt>
+              <dd>Cooperative Task</dd>
+              <dt>Turn Count</dt>
+              <dd>3 / 6</dd>
+              <dt>Status</dt>
+              <dd class="status">● Running</dd>
+            </dl>
+            <h2 class="subhead">Models</h2>
+            <div class="model-card"><b>●</b><span>Model A<small>(Proposer)</small></span></div>
+            <div class="model-card"><b>●</b><span>Model B<small>(Critic)</small></span></div>
+          </aside>
+        </div>
+      </section>
 
-        <section id="review-screen" class="screen">
-          <div class="page-heading review-heading"><h1>Run Review</h1><div class="run-meta"><span>Mode: <b>Cooperative Task</b></span><span>Turns: <b>6</b></span><span>Date: <b>Apr 26, 2025, 10:24 AM</b></span></div></div>
-          <div class="review-layout"><div class="panel transcript-panel"><div class="transcript-title">▣ Transcript</div><div id="review-messages"></div><div class="composer"><input placeholder="Add a message (optional)..." /><button class="primary">↗ Send</button></div></div><aside class="panel export-panel"><h2>Save & Export</h2><button class="dark full" id="save-local">⇩&nbsp; Save to Local</button><button class="light full" id="export-json">⇩&nbsp; Export JSON</button><button class="delete full" id="delete-run">⊗&nbsp; Delete Run</button><div class="summary"><h2>Summary</h2><p>6 turns completed.</p><p>Models responded as expected with minimal repetition and patient tone.</p><div class="summary-stats"><span>PARTICIPANTS<br><b>● ● ●</b></span><span>STATUS<br><b>Completed</b></span></div></div></aside></div>
-        </section>
-      </main>
-      <footer>Made with <span>◈</span> Vellum</footer>
-    </div>
-    <script src="script.js"></script>
-  </body>
+      <section id="review-screen" class="screen">
+        <div class="page-heading review-heading">
+          <h1>Run Review</h1>
+          <div class="run-meta"><span>Mode: <b>Cooperative Task</b></span><span>Turns: <b>6</b></span><span>Date: <b>Apr
+                26, 2025, 10:24 AM</b></span></div>
+        </div>
+        <div class="review-layout">
+          <div class="panel transcript-panel">
+            <div class="transcript-title">▣ Transcript</div>
+            <div id="review-messages"></div>
+            <div class="composer"><input placeholder="Add a message (optional)..." /><button class="primary">↗
+                Send</button></div>
+          </div>
+          <aside class="panel export-panel">
+            <h2>Save & Export</h2><button class="dark full" id="save-local">⇩&nbsp; Save to Local</button><button
+              class="light full" id="export-json">⇩&nbsp; Export JSON</button><button class="delete full"
+              id="delete-run">⊗&nbsp; Delete Run</button>
+            <div class="summary">
+              <h2>Summary</h2>
+              <p>6 turns completed.</p>
+              <p>Models responded as expected with minimal repetition and patient tone.</p>
+              <div class="summary-stats"><span>PARTICIPANTS<br><b>● ●
+                    ●</b></span><span>STATUS<br><b>Completed</b></span></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <footer>Made with <span>◈</span> Vellum</footer>
+  </div>
+  <script type="module" src="script.js"></script>
+</body>
+
 </html>

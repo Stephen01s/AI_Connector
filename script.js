@@ -1,5 +1,23 @@
+import {
+    addDoc, collection, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { db, usernameSessionKey } from './firebase.js';
+
 const API_URL = 'http://localhost:8000';
 let messages = [];
+let activeChatId = null;
+
+const currentUsername = localStorage.getItem(usernameSessionKey);
+const signInNav = document.querySelector('#sign-in-nav');
+signInNav.textContent = currentUsername ? `Sign Out · ${currentUsername}` : 'Sign In';
+signInNav.addEventListener('click', () => {
+    if (currentUsername) {
+        localStorage.removeItem(usernameSessionKey);
+        window.location.reload();
+    } else {
+        window.location.href = 'sign-in.html';
+    }
+});
 
 function renderMessages(target) {
     if (!target) return;
@@ -26,10 +44,13 @@ renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
 
 document.querySelectorAll('[data-nav]').forEach(button =>
-    button.addEventListener('click', () =>
-        show(button.dataset.nav === 'home' ? 'setup' :
-            button.dataset.nav === 'runs' ? 'review' : 'setup')
-    )
+    button.addEventListener('click', () => {
+        if (button.dataset.nav === 'runs') {
+            window.location.href = 'runs.html';
+        } else {
+            show('setup');
+        }
+    })
 );
 
 document.querySelector('#start-run').addEventListener('click', async () => {
@@ -61,6 +82,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         renderMessages(document.querySelector('#review-messages'));
         document.querySelector('#turn-status').textContent =
             'Run completed (' + messages.length + ' turns)';
+        activeChatId = await saveRun(prompt, result.messages);
         show('conversation');
     } catch (error) {
         alert('Could not connect to the Python server. Start it with: uvicorn server:app --reload');
@@ -71,12 +93,51 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     }
 });
 
+async function saveRun(prompt, runMessages) {
+    const username = localStorage.getItem(usernameSessionKey);
+    if (!username) return null;
+
+    try {
+        const chat = await addDoc(collection(db, 'chats'), {
+            userId: username,
+            username,
+            title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        await Promise.all(runMessages.map(message => addDoc(
+            collection(db, 'chats', chat.id, 'messages'),
+            {
+                role: message.role || 'assistant',
+                agentId: message.name || null,
+                content: message.text || '',
+                timestamp: serverTimestamp()
+            }
+        )));
+        document.querySelector('#turn-status').textContent += ' · Saved to your runs';
+        return chat.id;
+    } catch (error) {
+        console.error('Could not save run to Firestore:', error);
+        document.querySelector('#turn-status').textContent += ' · Could not save to your runs';
+        return null;
+    }
+}
+
 document.querySelector('#send-message').addEventListener('click', () => {
     const input = document.querySelector('#message-input');
     if (!input.value.trim()) return;
-    messages.push(['Human', 'Moderator', input.value.trim(), 'now']);
+    const content = input.value.trim();
+    messages.push(['Human', 'Moderator', content, new Date().toLocaleTimeString()]);
     renderMessages(document.querySelector('#messages'));
     input.value = '';
+    if (activeChatId) {
+        addDoc(collection(db, 'chats', activeChatId, 'messages'), {
+            role: 'Moderator',
+            agentId: 'Human',
+            content,
+            timestamp: serverTimestamp()
+        }).catch(error => console.error('Could not save moderator message:', error));
+    }
 });
 
 document.querySelector('#save-local').addEventListener('click', () =>

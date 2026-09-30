@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runs — Vellum</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Vellum home"><span class="brand-mark">◈</span> vellum</div>
+      <nav class="nav-links" aria-label="Main navigation">
+        <button type="button" data-page="index.html">⌂&nbsp; Home</button>
+        <button type="button" data-page="runs.html" aria-current="page">◌&nbsp; Runs</button>
+        <button type="button" data-page="index.html">♧&nbsp; Community</button>
+      </nav>
+      <button class="sign-in" id="sign-out" type="button">Sign Out</button>
+    </header>
+    <main class="runs-main">
+      <div class="page-heading">
+        <h1>Your Runs</h1>
+        <p id="runs-description">Previous conversations saved to your account.</p>
+      </div>
+      <p id="runs-status" class="runs-status" role="status" aria-live="polite">Loading your runs…</p>
+      <div class="runs-layout">
+        <section class="panel runs-list-panel" aria-labelledby="runs-list-title">
+          <h2 id="runs-list-title">Previous chats</h2>
+          <div id="runs-list" class="runs-list"></div>
+        </section>
+        <section class="panel run-detail-panel" aria-labelledby="run-detail-title">
+          <h2 id="run-detail-title">Select a chat</h2>
+          <p id="run-detail-empty" class="run-detail-empty">Choose a run to view its conversation.</p>
+          <div id="run-messages" class="run-messages"></div>
+        </section>
+      </div>
+    </main>
+    <footer>Made with <span>◈</span> Vellum</footer>
+  </div>
+  <script type="module" src="runs.js"></script>
+</body>
+</html>
