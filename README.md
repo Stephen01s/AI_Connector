@@ -1,7 +1,6 @@
-# Vellum Run Prototype
+# AI-Connector Run Prototype
 
-This prototype includes a small Python API that runs a feedback loop between
-two mock agents.
+This prototype includes a small Python API that runs a feedback loop between two mock agents.
 
 ## Run it
 
@@ -10,9 +9,8 @@ From this folder, install the dependencies and start the server:
     python -m pip install -r requirements.txt
     uvicorn server:app --reload
 
-Then open index.html in a browser. Enter an initial prompt and click Start
-Run. The browser calls POST /api/run, and the Python server alternates between
-Model A and Model B.
+Then open index.html in a browser. Enter an initial prompt and click Start Run. 
+The browser calls POST /api/run, and the Python server alternates between Model A and Model B.
 
 ## Structure
 
