@@ -6,6 +6,7 @@ import { db, usernameSessionKey } from './firebase.js';
 const API_URL = 'http://localhost:8000';
 let messages = [];
 let activeChatId = null;
+let prompts = [];
 
 const currentUsername = localStorage.getItem(usernameSessionKey);
 const signInNav = document.querySelector('#sign-in-nav');
@@ -42,6 +43,24 @@ function show(name) {
 
 renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
+
+document.querySelector('#random-prompt').addEventListener('click', async () => {
+    const promptInput = document.querySelector('#initial-prompt');
+
+    try {
+        if (!prompts.length) {
+            const response = await fetch('./prompts.json');
+            if (!response.ok) throw new Error('Could not load prompts');
+            ({prompts} = await response.json());
+        }
+
+        promptInput.value = prompts[Math.floor(Math.random() * prompts.length)];
+        promptInput.focus();
+    } catch (error) {
+        alert('Could not load a random prompt.');
+        console.error(error);
+    }
+});
 
 document.querySelectorAll('[data-nav]').forEach(button =>
     button.addEventListener('click', () => {
