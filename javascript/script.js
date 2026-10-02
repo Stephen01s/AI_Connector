@@ -85,7 +85,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         activeChatId = await saveRun(prompt, result.messages);
         show('conversation');
     } catch (error) {
-        alert('Could not connect to the Python server. Start it with: uvicorn server:app --reload');
+        alert('Could not connect to the Python server. Start it with: uvicorn server:app --app-dir python --reload');
         console.error(error);
     } finally {
         startButton.disabled = false;
@@ -151,7 +151,7 @@ document.querySelector('#export-json').addEventListener('click', () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'vellum-run.json';
+    link.download = 'jash-run.json';
     link.click();
     URL.revokeObjectURL(url);
 });
