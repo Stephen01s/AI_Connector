@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JASH — Collaborative Runs</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <title>J.A.S.H. — Collaborative Runs</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand" aria-label="JASH home"><span class="brand-mark">◈</span> JASH</div>
+      <div class="brand" aria-label="J.A.S.H. home"><span class="brand-mark">◈</span> J.A.S.H.</div>
       <nav class="nav-links" aria-label="Main navigation">
         <button data-nav="home">⌂&nbsp; Home</button>
         <button data-nav="runs">◌&nbsp; Runs</button>
@@ -62,7 +62,8 @@
                     <option>Debate</option>
                     <option>Brainstorm</option>
                   </select></label><label>Initial Prompt<textarea id="initial-prompt"
-                    placeholder="Enter your prompt here..."></textarea></label>
+                    placeholder="Enter your prompt here..."></textarea><button class="light full random-prompt"
+                    id="random-prompt" type="button">Give me a random prompt</button></label>
               </div>
             </div>
             <button class="primary full" id="start-run">Start Run</button>
@@ -132,7 +133,7 @@
         </div>
       </section>
     </main>
-    <footer>Made with <span>◈</span> JASH</footer>
+    <footer>Made with <span>◈</span> J.A.S.H.</footer>
   </div>
   <script type="module" src="../javascript/script.js"></script>
 </body>
