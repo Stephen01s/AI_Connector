@@ -1,5 +1,11 @@
 # AI-Connector Run Prototype
 
+## Team Members
+
+Joanna, Austin, Stephen, Hayden
+
+## Software Description
+
 This prototype includes a small Python API that runs a feedback loop between two mock agents.
 
 ## Run it
@@ -70,3 +76,16 @@ will only be needed after the agents are connected to an external AI provider.
 - requirements.txt - Python dependencies
 - assets/ - reserved for future icons or imagery
 - wireframes/ - wireframes for the website
+
+## Team Communication
+
+We are using the regular messaging app to communicate.
+
+## Team Responsibility
+
+J: Wireframe, prompt suggestions
+A: Account storage, sign in, pull data to display
+S: Website pages and functionality
+H: Model Interaction
+
+## Reflections
