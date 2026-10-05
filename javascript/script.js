@@ -49,7 +49,7 @@ document.querySelector('#random-prompt').addEventListener('click', async () => {
 
     try {
         if (!prompts.length) {
-            const response = await fetch('./prompts.json');
+            const response = await fetch('../json/prompts.json');
             if (!response.ok) throw new Error('Could not load prompts');
             ({prompts} = await response.json());
         }
