@@ -129,6 +129,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
                 renderMessages(document.querySelector('#review-messages'));
                 document.querySelector('#turn-status').textContent =
                     message.name + ' responded (' + messages.length + ' turns)';
+                document.querySelector('#turn-count').textContent =
+                    messages.length + ' / ' + turns;
             }
 
             if (done) break;
