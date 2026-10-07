@@ -6,7 +6,9 @@ Joanna, Austin, Stephen, Hayden
 
 ## Software Description
 
-This prototype includes a small Python API that runs a feedback loop between two mock agents.
+This prototype includes a small Python API that runs a feedback loop between
+two Gemini-backed agents. The initial prompt entered on the website is used as
+the system prompt for both agents.
 
 ## Run it
 
@@ -34,6 +36,7 @@ The backend provides these routes:
 - http://localhost:8000/api/health - checks whether the backend is running
 - http://localhost:8000/docs - opens the FastAPI interactive documentation
 - POST http://localhost:8000/api/run - runs the two-agent conversation
+- POST http://localhost:8000/api/run/stream - streams each completed response to the website
 
 The backend does not currently define a GET root route, so visiting
 http://localhost:8000/ will correctly return 404 Not Found. This does not
@@ -62,8 +65,9 @@ The .env file is ignored by Git and must not be committed. Never place a
 real API key in html/, javascript/, or any other browser-side file.
 If a key has been exposed or committed, revoke it and create a replacement.
 
-The current mock-agent server does not read values from .env yet. This file
-will only be needed after the agents are connected to an external AI provider.
+The Gemini agents load the local .env file and use GEMINI_API_KEY. The key is
+mapped to GOOGLE_API_KEY for LangChain's Google integration. Never commit the
+.env file or place the key in browser-side files.
 
 ## Structure
 
@@ -71,7 +75,7 @@ will only be needed after the agents are connected to an external AI provider.
 - css/styles.css - responsive visual styling
 - javascript/ - browser JavaScript modules and Firebase setup
 - python/server.py - FastAPI endpoint that runs the feedback loop
-- python/agents.py - mock Model A and Model B implementations
+- python/agents.py - Gemini Model A and Model B implementations
 - json/prompts.json - prompt data
 - requirements.txt - Python dependencies
 - assets/ - reserved for future icons or imagery

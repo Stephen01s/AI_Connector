@@ -84,27 +84,74 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 
     startButton.disabled = true;
     startButton.textContent = 'Running...';
+    messages = [];
+    activeChatId = null;
+    renderMessages(document.querySelector('#messages'));
+    renderMessages(document.querySelector('#review-messages'));
+    document.querySelector('#turn-status').textContent = 'Run in progress...';
+    show('conversation');
+    // Let the browser paint the conversation screen before starting the
+    // request that may take several seconds.
+    await new Promise(resolve =>
+        requestAnimationFrame(() =>
+            requestAnimationFrame(resolve)
+        )
+    );
 
     try {
-        const response = await fetch(API_URL + '/api/run', {
+        const response = await fetch(API_URL + '/api/run/stream', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({prompt, turns})
         });
         if (!response.ok) throw new Error('Server returned ' + response.status);
 
-        const result = await response.json();
-        messages = result.messages.map(message => [
-            message.name, message.role, message.text, message.time
-        ]);
-        renderMessages(document.querySelector('#messages'));
-        renderMessages(document.querySelector('#review-messages'));
+        if (!response.body) throw new Error('Streaming is not supported by this browser');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const {value, done} = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                const message = JSON.parse(line);
+                messages.push([
+                    message.name, message.role, message.text, message.time
+                ]);
+                renderMessages(document.querySelector('#messages'));
+                renderMessages(document.querySelector('#review-messages'));
+                document.querySelector('#turn-status').textContent =
+                    message.name + ' responded (' + messages.length + ' turns)';
+            }
+
+            if (done) break;
+        }
+
+        if (buffer.trim()) {
+            const message = JSON.parse(buffer);
+            messages.push([
+                message.name, message.role, message.text, message.time
+            ]);
+            renderMessages(document.querySelector('#messages'));
+            renderMessages(document.querySelector('#review-messages'));
+        }
+
         document.querySelector('#turn-status').textContent =
             'Run completed (' + messages.length + ' turns)';
-        activeChatId = await saveRun(prompt, result.messages);
-        show('conversation');
+        activeChatId = await saveRun(prompt, messages.map(([name, role, text]) => ({
+            name, role, text
+        })));
     } catch (error) {
-        alert('Could not connect to the Python server. Start it with: uvicorn server:app --app-dir python --reload');
+        document.querySelector('#turn-status').textContent =
+            'Run stopped before completion';
+        alert('Could not complete the conversation. Start the Python server with: uvicorn server:app --app-dir python --reload');
         console.error(error);
     } finally {
         startButton.disabled = false;

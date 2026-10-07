@@ -1,10 +1,12 @@
 """Small FastAPI server for the two-agent conversation prototype."""
 
+import json
 from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from starlette.responses import StreamingResponse
 
 from agents import AgentA, AgentB
 
@@ -36,6 +38,24 @@ class RunResponse(BaseModel):
     messages: list[Message]
 
 
+def _generate_messages(request: RunRequest):
+    """Generate each agent response as soon as it is complete."""
+    agents = [AgentA(), AgentB()]
+    previous_message = ""
+
+    for turn in range(request.turns):
+        agent = agents[turn % len(agents)]
+        response = agent.respond(request.prompt, previous_message)
+        message = Message(
+            name=agent.name,
+            role=agent.role,
+            text=response,
+            time=datetime.now().strftime("%I:%M %p").lstrip("0"),
+        )
+        yield message
+        previous_message = response
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -43,21 +63,20 @@ def health() -> dict[str, str]:
 
 @app.post("/api/run", response_model=RunResponse)
 def run_conversation(request: RunRequest) -> RunResponse:
-    agents = [AgentA(), AgentB()]
-    messages: list[Message] = []
-    previous_message = ""
+    return RunResponse(
+        prompt=request.prompt,
+        messages=list(_generate_messages(request)),
+    )
 
-    for turn in range(request.turns):
-        agent = agents[turn % len(agents)]
-        response = agent.respond(request.prompt, previous_message)
-        messages.append(
-            Message(
-                name=agent.name,
-                role=agent.role,
-                text=response,
-                time=datetime.now().strftime("%I:%M %p").lstrip("0"),
-            )
-        )
-        previous_message = response
 
-    return RunResponse(prompt=request.prompt, messages=messages)
+@app.post("/api/run/stream")
+def stream_conversation(request: RunRequest) -> StreamingResponse:
+    """Stream one newline-delimited JSON message for each completed turn."""
+    def message_stream():
+        for message in _generate_messages(request):
+            yield json.dumps(message.model_dump()) + "\n"
+
+    return StreamingResponse(
+        message_stream(),
+        media_type="application/x-ndjson",
+    )
