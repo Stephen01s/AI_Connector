@@ -1,6 +1,7 @@
 """Small FastAPI server for the two-agent conversation prototype."""
 
 import json
+import time
 from datetime import datetime
 
 from fastapi import FastAPI
@@ -12,6 +13,7 @@ from agents import AgentA, AgentB
 
 
 app = FastAPI(title="Two-Agent Prototype")
+TURN_DELAY_SECONDS = 3
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,6 +53,9 @@ def _generate_messages(request: RunRequest):
     previous_message = ""
 
     for turn in range(request.turns):
+        if turn > 0:
+            time.sleep(TURN_DELAY_SECONDS)
+
         agent = agents[turn % len(agents)]
         response = agent.respond(request.prompt, previous_message)
         message = Message(
