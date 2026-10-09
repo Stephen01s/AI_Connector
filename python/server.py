@@ -24,6 +24,10 @@ app.add_middleware(
 class RunRequest(BaseModel):
     prompt: str = Field(min_length=1)
     turns: int = Field(default=6, ge=1, le=20)
+    model_a_name: str | None = Field(default=None, max_length=50)
+    model_b_name: str | None = Field(default=None, max_length=50)
+    model_a_role: str | None = Field(default=None, max_length=50)
+    model_b_role: str | None = Field(default=None, max_length=50)
 
 
 class Message(BaseModel):
@@ -40,7 +44,10 @@ class RunResponse(BaseModel):
 
 def _generate_messages(request: RunRequest):
     """Generate each agent response as soon as it is complete."""
-    agents = [AgentA(), AgentB()]
+    agents = [
+        AgentA(request.model_a_name, request.model_a_role),
+        AgentB(request.model_b_name, request.model_b_role),
+    ]
     previous_message = ""
 
     for turn in range(request.turns):

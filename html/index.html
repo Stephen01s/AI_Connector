@@ -35,12 +35,12 @@
                     <option>GPT-4o</option>
                     <option>Claude 3.5 Sonnet</option>
                     <option>Gemini 1.5 Pro</option>
-                  </select></label><label>Role<select>
+                  </select></label><label>Role<select id="model-a-role">
                     <option>Select a role...</option>
                     <option>Researcher</option>
                     <option>Critic</option>
                     <option>Planner</option>
-                  </select></label><label>Display Name (optional)<input placeholder="e.g. Proposer" /></label>
+                  </select></label><label>Display Name (optional)<input id="model-a-name" placeholder="e.g. Proposer" /></label>
               </div>
               <div class="model-column">
                 <h2>◉ Model B</h2><label>Model<select>
@@ -48,12 +48,12 @@
                     <option>Claude 3.5 Sonnet</option>
                     <option>GPT-4o</option>
                     <option>Gemini 1.5 Pro</option>
-                  </select></label><label>Role<select>
+                  </select></label><label>Role<select id="model-b-role">
                     <option>Select a role...</option>
                     <option>Critic</option>
                     <option>Researcher</option>
                     <option>Planner</option>
-                  </select></label><label>Display Name (optional)<input placeholder="e.g. Critic" /></label>
+                  </select></label><label>Display Name (optional)<input id="model-b-name" placeholder="e.g. Critic" /></label>
               </div>
               <div class="run-column">
                 <h2>⚙ Run Settings</h2><label>Turn Limit<input id="turn-limit" type="number" value="6" min="1"
@@ -99,8 +99,8 @@
               <dd class="status">● Running</dd>
             </dl>
             <h2 class="subhead">Models</h2>
-            <div class="model-card"><b>●</b><span>Model A<small>(Proposer)</small></span></div>
-            <div class="model-card"><b>●</b><span>Model B<small>(Critic)</small></span></div>
+            <div class="model-card"><b>●</b><span><span id="model-a-card-name">Model A</span><small id="model-a-card-role">(Proposer)</small></span></div>
+            <div class="model-card"><b>●</b><span><span id="model-b-card-name">Model B</span><small id="model-b-card-role">(Critic)</small></span></div>
           </aside>
         </div>
       </section>

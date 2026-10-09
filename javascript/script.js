@@ -41,8 +41,32 @@ function show(name) {
     window.scrollTo(0, 0);
 }
 
+function getRoleValue(selector, fallback) {
+    const value = document.querySelector(selector).value.trim();
+    return value && value !== 'Select a role...' ? value : fallback;
+}
+
+function updateModelCards() {
+    const modelAName = document.querySelector('#model-a-name').value.trim() || 'Model A';
+    const modelBName = document.querySelector('#model-b-name').value.trim() || 'Model B';
+    const modelARole = getRoleValue('#model-a-role', 'Proposer');
+    const modelBRole = getRoleValue('#model-b-role', 'Critic');
+
+    document.querySelector('#model-a-card-name').textContent = modelAName;
+    document.querySelector('#model-a-card-role').textContent = '(' + modelARole + ')';
+    document.querySelector('#model-b-card-name').textContent = modelBName;
+    document.querySelector('#model-b-card-role').textContent = '(' + modelBRole + ')';
+}
+
 renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
+updateModelCards();
+
+['#model-a-name', '#model-b-name', '#model-a-role', '#model-b-role']
+    .forEach(selector => {
+        document.querySelector(selector).addEventListener('input', updateModelCards);
+        document.querySelector(selector).addEventListener('change', updateModelCards);
+    });
 
 document.querySelector('#random-prompt').addEventListener('click', async () => {
     const promptInput = document.querySelector('#initial-prompt');
@@ -75,6 +99,16 @@ document.querySelectorAll('[data-nav]').forEach(button =>
 document.querySelector('#start-run').addEventListener('click', async () => {
     const prompt = document.querySelector('#initial-prompt').value.trim();
     const turns = Number(document.querySelector('#turn-limit').value);
+    const modelAName = document.querySelector('#model-a-name').value.trim();
+    const modelBName = document.querySelector('#model-b-name').value.trim();
+    const selectedModelARole = document.querySelector('#model-a-role').value;
+    const selectedModelBRole = document.querySelector('#model-b-role').value;
+    const modelARole = selectedModelARole === 'Select a role...'
+        ? ''
+        : selectedModelARole;
+    const modelBRole = selectedModelBRole === 'Select a role...'
+        ? ''
+        : selectedModelBRole;
     const startButton = document.querySelector('#start-run');
 
     if (!prompt) {
@@ -102,7 +136,14 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         const response = await fetch(API_URL + '/api/run/stream', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({prompt, turns})
+            body: JSON.stringify({
+                prompt,
+                turns,
+                model_a_name: modelAName,
+                model_b_name: modelBName,
+                model_a_role: modelARole,
+                model_b_role: modelBRole
+            })
         });
         if (!response.ok) throw new Error('Server returned ' + response.status);
 

@@ -83,16 +83,40 @@ def get_response(
 
 
 class AgentA:
-    name = "Model A"
-    role = "Proposer"
+    default_name = "Model A"
+    default_role = "Proposer"
+
+    def __init__(
+        self,
+        display_name: str | None = None,
+        role: str | None = None,
+    ):
+        self.name = display_name.strip() if display_name else self.default_name
+        if not self.name:
+            self.name = self.default_name
+        self.role = role.strip() if role else self.default_role
+        if not self.role or self.role == "Select a role...":
+            self.role = self.default_role
 
     def respond(self, prompt: str, previous_message: str) -> str:
         return get_response(prompt, previous_message, self.role)
 
 
 class AgentB:
-    name = "Model B"
-    role = "Critic"
+    default_name = "Model B"
+    default_role = "Critic"
+
+    def __init__(
+        self,
+        display_name: str | None = None,
+        role: str | None = None,
+    ):
+        self.name = display_name.strip() if display_name else self.default_name
+        if not self.name:
+            self.name = self.default_name
+        self.role = role.strip() if role else self.default_role
+        if not self.role or self.role == "Select a role...":
+            self.role = self.default_role
 
     def respond(self, prompt: str, previous_message: str) -> str:
         return get_response(prompt, previous_message, self.role)
