@@ -35,12 +35,19 @@
                     <option>GPT-4o</option>
                     <option>Claude 3.5 Sonnet</option>
                     <option>Gemini 1.5 Pro</option>
-                  </select></label><label>Role<select id="model-a-role">
-                    <option>Select a role...</option>
+                  </select></label><label>Role<select id="model-a-role" data-custom-role-input="model-a-custom-role">
+                    <option value="">Select a role...</option>
                     <option>Researcher</option>
                     <option>Critic</option>
                     <option>Planner</option>
-                  </select></label><label>Display Name (optional)<input id="model-a-name" placeholder="e.g. Proposer" /></label>
+                    <option value="custom">Custom role...</option>
+                  </select></label>
+                <div data-custom-role-field hidden>
+                  <label for="model-a-custom-role">Custom Role
+                    <input id="model-a-custom-role" type="text" maxlength="50" placeholder="e.g. Science Teacher" disabled />
+                  </label>
+                </div>
+                <label>Display Name (optional)<input id="model-a-name" placeholder="e.g. Proposer" /></label>
               </div>
               <div class="model-column">
                 <h2>◉ Model B</h2><label>Model<select>
@@ -48,12 +55,19 @@
                     <option>Claude 3.5 Sonnet</option>
                     <option>GPT-4o</option>
                     <option>Gemini 1.5 Pro</option>
-                  </select></label><label>Role<select id="model-b-role">
-                    <option>Select a role...</option>
+                  </select></label><label>Role<select id="model-b-role" data-custom-role-input="model-b-custom-role">
+                    <option value="">Select a role...</option>
                     <option>Critic</option>
                     <option>Researcher</option>
                     <option>Planner</option>
-                  </select></label><label>Display Name (optional)<input id="model-b-name" placeholder="e.g. Critic" /></label>
+                    <option value="custom">Custom role...</option>
+                  </select></label>
+                <div data-custom-role-field hidden>
+                  <label for="model-b-custom-role">Custom Role
+                    <input id="model-b-custom-role" type="text" maxlength="50" placeholder="e.g. Fact Checker" disabled />
+                  </label>
+                </div>
+                <label>Display Name (optional)<input id="model-b-name" placeholder="e.g. Critic" /></label>
               </div>
               <div class="run-column">
                 <h2>⚙ Run Settings</h2><label>Turn Limit<input id="turn-limit" type="number" value="6" min="1"
@@ -135,7 +149,8 @@
     </main>
     <footer>Made with <span>◈</span> J.A.S.H.</footer>
   </div>
-  <script type="module" src="../javascript/script.js"></script>
+  <script defer src="../javascript/role-controls.js?v=1"></script>
+  <script type="module" src="../javascript/script.js?v=custom-roles-2"></script>
 </body>
 
 </html>

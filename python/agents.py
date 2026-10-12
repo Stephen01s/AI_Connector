@@ -1,5 +1,8 @@
 """Gemini-backed agents for the two-agent conversation prototype."""
-
+"""
+TODO: Add a third agent that summarizes the chat and determines 
+      if it was close to the original prompt or not
+"""
 import asyncio
 import os
 from pathlib import Path
@@ -42,8 +45,7 @@ def _get_text_response(result: dict) -> str:
 def _build_agent(system_prompt: str, role: str, model: str = DEFAULT_MODEL):
     """Create one Gemini agent using the prompt entered on the website."""
     role_instructions = (
-        f"\n\nYou are the {role} in a conversation between two agents. "
-        "Respond directly to the other agent and contribute useful progress."
+        f"\n\nYou are (the) {role} in a conversation."
     )
 
     return create_agent(

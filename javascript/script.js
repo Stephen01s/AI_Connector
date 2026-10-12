@@ -3,6 +3,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 
+const {getRoleValue, updateModelCards} = window.roleControls;
 const API_URL = 'http://localhost:8000';
 let messages = [];
 let activeChatId = null;
@@ -22,15 +23,19 @@ signInNav.addEventListener('click', () => {
 
 function renderMessages(target) {
     if (!target) return;
-    target.innerHTML = messages.map(([name, role, text, time]) =>
-        '<div class="message">' +
-            '<div class="avatar">' + name[0] + '</div>' +
-            '<div><strong>' + name +
-                ' <small style="display:inline">(' + role + ')</small></strong>' +
-                '<p>' + text + '</p></div>' +
-            '<span class="time">' + time + '</span>' +
-        '</div>'
-    ).join('');
+    target.replaceChildren(...messages.map(([name, role, text, time]) => {
+        const message = document.createElement('div');
+        message.className = 'message';
+        message.innerHTML = '<div class="avatar"></div>' +
+            '<div><strong><span></span> <small style="display:inline"></small></strong>' +
+            '<p></p></div><span class="time"></span>';
+        message.querySelector('.avatar').textContent = name[0];
+        message.querySelector('strong span').textContent = name;
+        message.querySelector('small').textContent = '(' + role + ')';
+        message.querySelector('p').textContent = text;
+        message.querySelector('.time').textContent = time;
+        return message;
+    }));
 }
 
 function show(name) {
@@ -41,32 +46,8 @@ function show(name) {
     window.scrollTo(0, 0);
 }
 
-function getRoleValue(selector, fallback) {
-    const value = document.querySelector(selector).value.trim();
-    return value && value !== 'Select a role...' ? value : fallback;
-}
-
-function updateModelCards() {
-    const modelAName = document.querySelector('#model-a-name').value.trim() || 'Model A';
-    const modelBName = document.querySelector('#model-b-name').value.trim() || 'Model B';
-    const modelARole = getRoleValue('#model-a-role', 'Proposer');
-    const modelBRole = getRoleValue('#model-b-role', 'Critic');
-
-    document.querySelector('#model-a-card-name').textContent = modelAName;
-    document.querySelector('#model-a-card-role').textContent = '(' + modelARole + ')';
-    document.querySelector('#model-b-card-name').textContent = modelBName;
-    document.querySelector('#model-b-card-role').textContent = '(' + modelBRole + ')';
-}
-
 renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
-updateModelCards();
-
-['#model-a-name', '#model-b-name', '#model-a-role', '#model-b-role']
-    .forEach(selector => {
-        document.querySelector(selector).addEventListener('input', updateModelCards);
-        document.querySelector(selector).addEventListener('change', updateModelCards);
-    });
 
 document.querySelector('#random-prompt').addEventListener('click', async () => {
     const promptInput = document.querySelector('#initial-prompt');
@@ -101,14 +82,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     const turns = Number(document.querySelector('#turn-limit').value);
     const modelAName = document.querySelector('#model-a-name').value.trim();
     const modelBName = document.querySelector('#model-b-name').value.trim();
-    const selectedModelARole = document.querySelector('#model-a-role').value;
-    const selectedModelBRole = document.querySelector('#model-b-role').value;
-    const modelARole = selectedModelARole === 'Select a role...'
-        ? ''
-        : selectedModelARole;
-    const modelBRole = selectedModelBRole === 'Select a role...'
-        ? ''
-        : selectedModelBRole;
+    const modelARole = getRoleValue('#model-a-role');
+    const modelBRole = getRoleValue('#model-b-role');
     const startButton = document.querySelector('#start-run');
 
     if (!prompt) {
@@ -116,6 +91,14 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         return;
     }
 
+    for (const select of document.querySelectorAll('[data-custom-role-input]')) {
+        if (select.value !== 'custom') continue;
+        const input = document.getElementById(select.dataset.customRoleInput);
+        input.setCustomValidity(input.value.trim() ? '' : 'Please enter a custom role.');
+        if (!input.reportValidity()) return;
+    }
+
+    updateModelCards();
     startButton.disabled = true;
     startButton.textContent = 'Running...';
     messages = [];
