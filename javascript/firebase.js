@@ -1,4 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -10,5 +11,8 @@ const firebaseConfig = {
     appId: '1:767392226522:web:e66297ffbf1796d59c99e3'
 };
 
-export const db = getFirestore(initializeApp(firebaseConfig));
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
 export const usernameSessionKey = 'vellumSignedInUsername';
