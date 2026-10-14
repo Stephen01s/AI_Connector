@@ -45,7 +45,7 @@ def _get_text_response(result: dict) -> str:
 def _build_agent(system_prompt: str, role: str, model: str = DEFAULT_MODEL):
     """Create one Gemini agent using the prompt entered on the website."""
     role_instructions = (
-        f"\n\nYou are (the) {role} in a conversation."
+        f"\n\nYou are (the) {role} in a conversation. Use only a maximum of 100 words for each response."
     )
 
     return create_agent(
