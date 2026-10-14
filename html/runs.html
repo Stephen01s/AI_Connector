@@ -4,20 +4,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Runs — JASH</title>
+  <title>Runs — Jash</title>
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
 
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand" aria-label="JASH home"><span class="brand-mark">◈</span> JASH</div>
+      <div class="brand" aria-label="Jash home"><span class="brand-mark">◈</span> Jash</div>
       <nav class="nav-links" aria-label="Main navigation">
         <button type="button" data-page="index.html">⌂&nbsp; Home</button>
         <button type="button" data-page="runs.html" aria-current="page">◌&nbsp; Runs</button>
         <button type="button" data-page="index.html">♧&nbsp; Community</button>
       </nav>
-      <button class="sign-in" id="sign-out" type="button">Sign In</button>
+      <div class="account-actions" id="account-actions">
+        <button class="sign-in" id="user-settings" type="button">User Settings</button>
+        <button class="sign-in" id="sign-out" type="button">Sign Out</button>
+        <button class="sign-in" id="sign-in-nav" type="button" hidden>Sign In</button>
+      </div>
     </header>
     <main class="runs-main">
       <div class="page-heading">
@@ -37,7 +41,6 @@
         </section>
       </div>
     </main>
-    <footer>Made with <span>◈</span> JASH</footer>
   </div>
   <script type="module" src="../javascript/runs.js"></script>
 </body>
