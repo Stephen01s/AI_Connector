@@ -48,6 +48,12 @@ function show(name) {
     window.scrollTo(0, 0);
 }
 
+function setRespondingModel(name = '') {
+    const indicator = document.querySelector('#responding-model');
+    indicator.textContent = name ? '◌ ' + name + ' is responding...' : '';
+    indicator.hidden = !name;
+}
+
 renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
 
@@ -108,6 +114,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     renderMessages(document.querySelector('#messages'));
     renderMessages(document.querySelector('#review-messages'));
     document.querySelector('#turn-status').textContent = 'Run in progress...';
+    document.querySelector('#turn-count').textContent = '0 / ' + turns;
+    setRespondingModel();
     show('conversation');
     // Let the browser paint the conversation screen before starting the
     // request that may take several seconds.
@@ -137,6 +145,26 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        let completedTurns = 0;
+
+        function handleRunEvent(event) {
+            if (event.type === 'responding') {
+                setRespondingModel(completedTurns < turns ? event.name : '');
+                return;
+            }
+
+            messages.push([
+                event.name, event.role, event.text, event.time
+            ]);
+            completedTurns += 1;
+            renderMessages(document.querySelector('#messages'));
+            renderMessages(document.querySelector('#review-messages'));
+            document.querySelector('#turn-status').textContent =
+                event.name + ' responded (' + completedTurns + ' turns)';
+            document.querySelector('#turn-count').textContent =
+                completedTurns + ' / ' + turns;
+            setRespondingModel();
+        }
 
         while (true) {
             const {value, done} = await reader.read();
@@ -147,41 +175,29 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 
             for (const line of lines) {
                 if (!line.trim()) continue;
-                const message = JSON.parse(line);
-                messages.push([
-                    message.name, message.role, message.text, message.time
-                ]);
-                renderMessages(document.querySelector('#messages'));
-                renderMessages(document.querySelector('#review-messages'));
-                document.querySelector('#turn-status').textContent =
-                    message.name + ' responded (' + messages.length + ' turns)';
-                document.querySelector('#turn-count').textContent =
-                    messages.length + ' / ' + turns;
+                handleRunEvent(JSON.parse(line));
             }
 
             if (done) break;
         }
 
         if (buffer.trim()) {
-            const message = JSON.parse(buffer);
-            messages.push([
-                message.name, message.role, message.text, message.time
-            ]);
-            renderMessages(document.querySelector('#messages'));
-            renderMessages(document.querySelector('#review-messages'));
+            handleRunEvent(JSON.parse(buffer));
         }
 
         document.querySelector('#turn-status').textContent =
-            'Run completed (' + messages.length + ' turns)';
+            'Run completed (' + completedTurns + ' turns)';
         activeChatId = await saveRun(prompt, messages.map(([name, role, text]) => ({
             name, role, text
         })));
     } catch (error) {
+        setRespondingModel();
         document.querySelector('#turn-status').textContent =
             'Run stopped before completion';
         alert('Could not complete the conversation. Start the Python server with: uvicorn server:app --app-dir python --reload');
         console.error(error);
     } finally {
+        setRespondingModel();
         startButton.disabled = false;
         startButton.textContent = 'Start Run';
     }

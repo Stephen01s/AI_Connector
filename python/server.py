@@ -44,8 +44,8 @@ class RunResponse(BaseModel):
     messages: list[Message]
 
 
-def _generate_messages(request: RunRequest):
-    """Generate each agent response as soon as it is complete."""
+def _generate_events(request: RunRequest):
+    """Announce each responding agent, then yield its completed message."""
     agents = [
         AgentA(request.model_a_name, request.model_a_role),
         AgentB(request.model_b_name, request.model_b_role),
@@ -57,6 +57,7 @@ def _generate_messages(request: RunRequest):
             time.sleep(TURN_DELAY_SECONDS)
 
         agent = agents[turn % len(agents)]
+        yield {"type": "responding", "name": agent.name, "turn": turn + 1}
         response = agent.respond(request.prompt, previous_message)
         message = Message(
             name=agent.name,
@@ -66,6 +67,13 @@ def _generate_messages(request: RunRequest):
         )
         yield message
         previous_message = response
+
+
+def _generate_messages(request: RunRequest):
+    """Return only completed messages for the non-streaming endpoint."""
+    for event in _generate_events(request):
+        if isinstance(event, Message):
+            yield event
 
 
 @app.get("/api/health")
@@ -83,10 +91,11 @@ def run_conversation(request: RunRequest) -> RunResponse:
 
 @app.post("/api/run/stream")
 def stream_conversation(request: RunRequest) -> StreamingResponse:
-    """Stream one newline-delimited JSON message for each completed turn."""
+    """Stream responding-agent updates and completed messages as JSON lines."""
     def message_stream():
-        for message in _generate_messages(request):
-            yield json.dumps(message.model_dump()) + "\n"
+        for event in _generate_events(request):
+            payload = event.model_dump() if isinstance(event, Message) else event
+            yield json.dumps(payload) + "\n"
 
     return StreamingResponse(
         message_stream(),
