@@ -1,7 +1,8 @@
 import {
     addDoc, collection, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db, usernameSessionKey } from './firebase.js';
+import { signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { auth, db, usernameSessionKey } from './firebase.js';
 
 const {getRoleValue, updateModelCards} = window.roleControls;
 const API_URL = 'http://localhost:8000';
@@ -12,9 +13,10 @@ let prompts = [];
 const currentUsername = localStorage.getItem(usernameSessionKey);
 const signInNav = document.querySelector('#sign-in-nav');
 signInNav.textContent = currentUsername ? `Sign Out · ${currentUsername}` : 'Sign In';
-signInNav.addEventListener('click', () => {
+signInNav.addEventListener('click', async () => {
     if (currentUsername) {
         localStorage.removeItem(usernameSessionKey);
+        await signOut(auth);
         window.location.reload();
     } else {
         window.location.href = 'sign-in.html';
