@@ -1,10 +1,9 @@
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { auth, db, googleProvider, usernameSessionKey } from './firebase.js';
 
 const status = document.querySelector('#sign-in-status');
 const googleButton = document.querySelector('#google-sign-in');
-
 googleButton.addEventListener('click', async () => {
     googleButton.disabled = true;
     googleButton.textContent = 'Connecting to Google…';
@@ -45,14 +44,25 @@ document.querySelector('#sign-in-form').addEventListener('submit', async event =
     status.textContent = '';
 
     try {
-        const profile = await getDoc(doc(db, 'users', username));
+        let profile = await getDoc(doc(db, 'users', username));
+        let profileId = profile.exists() ? profile.id : null;
         if (!profile.exists()) {
+            const matches = await getDocs(query(
+                collection(db, 'users'),
+                where('username', '==', username),
+                limit(1)
+            ));
+            if (!matches.empty) {
+                profile = matches.docs[0];
+                profileId = profile.id;
+            }
+        }
+        if (!profileId) {
             status.textContent = 'We couldn’t find an account with that username.';
             return;
         }
 
-        const savedUsername = profile.data().username || username;
-        localStorage.setItem(usernameSessionKey, savedUsername);
+        localStorage.setItem(usernameSessionKey, profileId);
         window.location.href = 'runs.html';
     } catch (error) {
         console.error('Sign-in lookup failed:', error);

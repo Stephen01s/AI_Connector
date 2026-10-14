@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Settings — Jash</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Jash home"><span class="brand-mark">◈</span> Jash</div>
+      <nav class="nav-links" aria-label="Main navigation">
+        <button type="button" data-page="index.html">⌂&nbsp; Home</button>
+        <button type="button" data-page="runs.html">◌&nbsp; Runs</button>
+        <button type="button" data-page="index.html">♧&nbsp; Community</button>
+      </nav>
+      <div class="account-actions">
+        <button class="sign-in" id="user-settings" type="button" aria-current="page">User Settings</button>
+        <button class="sign-in" id="sign-out" type="button">Sign Out</button>
+        <button class="sign-in" id="sign-in-nav" type="button" hidden>Sign In</button>
+      </div>
+    </header>
+    <main class="settings-main">
+      <div class="page-heading">
+        <h1>User Settings</h1>
+        <p>View and update your profile information.</p>
+      </div>
+      <form id="settings-form" class="panel settings-form">
+        <p id="settings-status" class="settings-status" role="status" aria-live="polite">Loading profile…</p>
+        <label for="settings-username">Username
+          <input id="settings-username" name="username" maxlength="50" required disabled />
+        </label>
+        <label for="settings-description">Description
+          <textarea id="settings-description" name="description" maxlength="500" rows="4" disabled></textarea>
+        </label>
+        <label for="settings-email">Email
+          <input id="settings-email" name="email" type="email" disabled />
+        </label>
+        <label for="settings-user-id">User ID
+          <input id="settings-user-id" name="userID" disabled />
+        </label>
+        <div class="settings-date-row">
+          <label for="settings-created-at">Created At
+            <input id="settings-created-at" name="createdAt" disabled />
+          </label>
+          <label for="settings-updated-at">Updated At
+            <input id="settings-updated-at" name="updatedAt" disabled />
+          </label>
+        </div>
+        <div class="dialog-actions">
+          <button class="primary" id="save-settings" type="submit" disabled>Save Changes</button>
+        </div>
+      </form>
+    </main>
+  </div>
+  <script type="module" src="../javascript/account.js"></script>
+  <script type="module" src="../javascript/settings.js"></script>
+</body>
+
+</html>

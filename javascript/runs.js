@@ -1,8 +1,8 @@
 import {
     collection, getDocs, query, where, orderBy
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-import { auth, db, usernameSessionKey } from './firebase.js';
+import { db, usernameSessionKey } from './firebase.js';
+import './account.js';
 
 const username = localStorage.getItem(usernameSessionKey);
 const status = document.querySelector('#runs-status');
@@ -15,12 +15,6 @@ document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
         window.location.href = button.dataset.page;
     });
-});
-
-document.querySelector('#sign-out').addEventListener('click', async () => {
-    localStorage.removeItem(usernameSessionKey);
-    await signOut(auth);
-    window.location.href = 'index.html';
 });
 
 if (!username) {
