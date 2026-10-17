@@ -49,6 +49,7 @@
     margin: 0 0 14px;
     overflow-wrap: anywhere;
     display: -webkit-box;
+    line-clamp: 3;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
