@@ -16,6 +16,12 @@ const fields = {
     updatedAt: document.querySelector('#settings-updated-at')
 };
 
+document.querySelectorAll('[data-page]').forEach(button => {
+    button.addEventListener('click', () => {
+        window.location.href = button.dataset.page;
+    });
+});
+
 if (!sessionUserKey) {
     window.location.replace('sign-in.html');
 } else {
