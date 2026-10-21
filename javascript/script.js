@@ -66,6 +66,8 @@ document.querySelectorAll('[data-nav]').forEach(button =>
     button.addEventListener('click', () => {
         if (button.dataset.nav === 'runs') {
             window.location.href = 'runs.html';
+        } else if (button.dataset.nav === 'community') {
+            window.location.href = 'community.html';
         } else {
             show('setup');
         }
