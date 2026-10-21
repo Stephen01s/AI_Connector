@@ -5,8 +5,7 @@ import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
 const {getRoleValue, updateModelCards} = window.roleControls;
-<<<<<<< HEAD
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://ai-connector-szkl.onrender.com';
 const themeToggle = document.querySelector('#theme-toggle');
 const savedTheme = localStorage.getItem('jash-theme');
 if (savedTheme === 'dark') document.body.classList.add('dark-mode');
@@ -24,9 +23,7 @@ if (themeToggle) {
         updateThemeToggle();
     });
 }
-=======
-const API_URL = 'https://ai-connector-szkl.onrender.com';
->>>>>>> 848dd1bd29b57eff6c8142c3066888c52177aaf0
+
 let messages = [];
 let activeChatId = null;
 let prompts = [];
