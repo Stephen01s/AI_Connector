@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, limit, query, where } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { auth, db, googleProvider, usernameSessionKey } from './firebase.js';
 
 const status = document.querySelector('#sign-in-status');
@@ -12,8 +12,13 @@ googleButton.addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
-        const username = user.email || user.displayName || user.uid;
-        localStorage.setItem(usernameSessionKey, username);
+        const profileId = await findGoogleProfile(user);
+        if (!profileId) {
+            await signOut(auth);
+            status.textContent = 'We couldn’t find a profile for this Google account. Sign in with your username or ask an administrator to link your account.';
+            return;
+        }
+        localStorage.setItem(usernameSessionKey, profileId);
         window.location.href = 'runs.html';
     } catch (error) {
         console.error('Google sign-in failed:', error);
@@ -25,6 +30,25 @@ googleButton.addEventListener('click', async () => {
         googleButton.textContent = 'Continue with Google';
     }
 });
+
+async function findGoogleProfile(user) {
+    // The rest of the app stores the Firestore users document ID in session
+    // storage. Google credentials identify a Firebase Auth user instead, so
+    // resolve the profile by its Auth UID (and email for older records).
+    const directProfile = await getDoc(doc(db, 'users', user.uid));
+    if (directProfile.exists()) return directProfile.id;
+
+    for (const [field, value] of [['userID', user.uid], ['uid', user.uid], ['email', user.email]]) {
+        if (!value) continue;
+        const matches = await getDocs(query(
+            collection(db, 'users'),
+            where(field, '==', value),
+            limit(1)
+        ));
+        if (!matches.empty) return matches.docs[0].id;
+    }
+    return null;
+}
 
 document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
