@@ -2,7 +2,7 @@
 
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -100,7 +100,7 @@ def _generate_events(request: RunRequest):
             name=agent.name,
             role=agent.role,
             text=response,
-            time=datetime.now().strftime("%I:%M %p").lstrip("0"),
+            time=datetime.now(timezone.utc).isoformat(),
         )
         yield message
         previous_message = response

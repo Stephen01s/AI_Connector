@@ -31,6 +31,13 @@ let messages = [];
 let activeChatId = null;
 let prompts = [];
 
+function formatMessageTime(time) {
+    const date = new Date(time);
+    // Keep older clock-only values readable during a server redeploy.
+    if (Number.isNaN(date.getTime())) return time;
+    return date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+}
+
 function renderMessages(target) {
     if (!target) return;
     target.replaceChildren(...messages.map(([name, role, text, time]) => {
@@ -43,7 +50,7 @@ function renderMessages(target) {
         message.querySelector('strong span').textContent = name;
         message.querySelector('small').textContent = '(' + role + ')';
         message.querySelector('p').textContent = text;
-        message.querySelector('.time').textContent = time;
+        message.querySelector('.time').textContent = formatMessageTime(time);
         return message;
     }));
 }
@@ -268,7 +275,7 @@ document.querySelector('#send-message').addEventListener('click', () => {
     const input = document.querySelector('#message-input');
     if (!input.value.trim()) return;
     const content = input.value.trim();
-    messages.push(['Human', 'Moderator', content, new Date().toLocaleTimeString()]);
+    messages.push(['Human', 'Moderator', content, new Date().toISOString()]);
     renderMessages(document.querySelector('#messages'));
     input.value = '';
     if (activeChatId) {
