@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Community — Jash</title>
+        <link rel="stylesheet" href="../css/styles.css" />
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Community — Jash</title>
-    <link rel="stylesheet" href="../css/styles.css" />
-</head>
+    <body>
+        <div class = "app-shell">
+            <header class = "topbar">
+                <div class = "brand">
+                    <span class = "brand-mark">◈</span> Jash
+                </div>
+                <nav class = "nav-links" aria-label = "Main navigation">
+                    <button type = "button" data-page = "index.html">Home</button>
+                    <button type = "button" data-page = "runs.html">Runs</button>
+                    <button type = "button" data-page = "community.html" aria-current = "page">Community</button>
+                </nav>
 
-<body>
-    <div class = "app-shell">
-        <header class = "topbar">
-            <div class = "brand">
-                <span class = "brand-mark">◈</span> Jash
-            </div>
-            <nav class = "nav-links" aria-label = "Main navigation">
-                <button type = "button" data-page = "index.html">Home</button>
-                <button type = "button" data-page = "runs.html">Runs</button>
-                <button type = "button" data-page = "community.html" aria-current = "page">Community</button>
-            </nav>
+                <div class = "account-actions">
+                    <button class = "sign-in" id = "user-settings" type = "button">User Settings</button>
+                    <button class = "sign-in" id = "sign-out" type = "button">Sign Out</button>
+                    <button class = "sign-in" id = "sign-in-nav" type = "button" hidden>Sign In</button>
+                </div>
+            </header>
 
-            <div class = "account-actions">
-                <button class = "sign-in" id = "user-settings" type = "button">User Settings</button>
-                <button class = "sign-in" id = "sign-out" type = "button">Sign Out</button>
-                <button class = "sign-in" id = "sign-in-nav" type = "button" hidden>Sign In</button>
-            </div>
-        </header>
+            <main class = "community-main">
+                <div class = "page-heading">
+                    <h1>Community</h1>
+                    <p>See conversations shared by the community</p>
+                </div>
 
-        <main class = "community-main">
-            <div class = "page-heading">
-                <h1>Community</h1>
-                <p>See conversations shared by the community</p>
-            </div>
+                <section id = "community-list" class = "community-grid" aria-label = "Public conversations"></section>
 
-            <section id = "community-list" class = "community-grid" aria-label = "Public conversations"></section>
+                <section id = "community-detail" class = "panel community-detail" hidden>
+                    <button class = "light community-back" id = "community-back" type = "button">Back to Community</button>
+                    <h2 id = "community-detail-title"></h2>
+                    <p class = "community-byline" id = "community-detail-author"></p>
+                    <div id = "community-messages" class = "run-messages"></div>
+                </section>
+            </main>
+        </div>
 
-            <section id = "community-detail" class = "panel community-detail" hidden>
-                <button class = "light community-back" id = "community-back" type = "button">Back to Community</button>
-                <h2 id = "community-detail-title"></h2>
-                <p class = "community-byline" id = "community-detail-author"></p>
-                <div id = "community-messages" class = "run-messages"></div>
-            </section>
-        </main>
-    </div>
-</body>
+        <script type="module" src="../javascript/community.js"></script>
+    </body>
+</html>
