@@ -5,7 +5,7 @@ import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
 const {getRoleValue, updateModelCards} = window.roleControls;
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://ai-connector-szkl.onrender.com';
 let messages = [];
 let activeChatId = null;
 let prompts = [];
