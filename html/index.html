@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home — Jash</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="../css/styles.css?v=control-buttons-3" />
 </head>
 
 <body>
@@ -37,14 +37,15 @@
             <div class="model-grid">
               <div class="model-column">
                 <h2>◉ Model A</h2>
-                <label>Model
-                  <select>
-                    <option>Select a model...</option>
-                    <option>GPT-4o</option>
-                    <option>Claude 3.5 Sonnet</option>
-                    <option>Gemini 3.5 Flash Lite</option>
+                <label class="model-selection-label">Model
+                  <select id="model-a-model" data-api-key-model>
+                    <option value="openai:gpt-4o" data-provider="openai">GPT-4o</option>
+                    <option value="anthropic:claude-sonnet-5-5" data-provider="anthropic">Claude Sonnet 5.5</option>
+                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5 Flash Lite</option>
                   </select>
                 </label>
+                <button id="model-a-api-key" class="light full api-key-button" type="button">Set API key</button>
+                <!-- <p id="model-a-key-status" class="api-key-status" role="status"></p> -->
                 <label>Role
                   <select id="model-a-role" data-custom-role-input="model-a-custom-role">
                     <option value="">Select a role...</option>
@@ -63,14 +64,15 @@
               </div>
               <div class="model-column">
                 <h2>◉ Model B</h2>
-                <label>Model
-                  <select>
-                    <option>Select a model...</option>
-                    <option>Claude 3.5 Sonnet</option>
-                    <option>GPT-4o</option>
-                    <option>Gemini 3.5 Flash Lite</option>
+                <label class="model-selection-label">Model
+                  <select id="model-b-model" data-api-key-model>
+                    <option value="openai:gpt-4o" data-provider="openai">GPT-4o</option>
+                    <option value="anthropic:claude-sonnet-5-5" data-provider="anthropic">Claude Sonnet 5.5</option>
+                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5 Flash Lite</option>
                   </select>
                 </label>
+                <button id="model-b-api-key" class="light full api-key-button" type="button">Set API key</button>
+                <!-- <p id="model-b-key-status" class="api-key-status" role="status"></p> -->
                 <label>Role
                   <select id="model-b-role" data-custom-role-input="model-b-custom-role">
                     <option value="">Select a role...</option>
@@ -91,9 +93,10 @@
               </div>
               <div class="run-column">
                 <h2>⚙ Run Settings</h2>
-                <label>Turn Limit
+                <label class="turn-limit-label">Turn Limit
                   <input id="turn-limit" type="number" value="6" min="1" max="20"/>
                 </label>
+                <button class="light full api-key-button" id="clear-api-keys" type="button">Clear saved API keys</button>
                 <label>Mode (optional)
                   <select>
                     <option>Cooperative Task</option>
@@ -194,8 +197,28 @@
       </section>
     </main>
   </div>
+  <dialog id="api-key-dialog" class="sign-in-dialog" aria-labelledby="api-key-title" aria-describedby="api-key-description">
+    <form id="api-key-form">
+      <div class="dialog-heading">
+        <div>
+          <h2 id="api-key-title">API key</h2>
+          <p id="api-key-description"></p>
+        </div>
+        <button id="cancel-api-key" class="dialog-close" type="button" aria-label="Cancel">&times;</button>
+      </div>
+      <p class="api-key-notice">Your key is saved for this tab's session. During a run, it is sent to this app's Python server and your selected AI provider. API usage is billed to your provider account.</p>
+      <label for="api-key-input">API key
+        <input id="api-key-input" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="4096" required />
+      </label>
+      <p id="api-key-error" class="api-key-error" role="alert"></p>
+      <div class="dialog-actions">
+        <button class="primary" type="submit">Save for this tab</button>
+      </div>
+    </form>
+  </dialog>
   <script defer src="../javascript/role-controls.js?v=1"></script>
-  <script type="module" src="../javascript/script.js?v=responding-status-3"></script>
+  <script defer src="../javascript/api-keys.js?v=1"></script>
+  <script type="module" src="../javascript/script.js?v=session-api-keys-4"></script>
 </body>
 
 </html>

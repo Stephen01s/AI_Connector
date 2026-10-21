@@ -7,8 +7,8 @@ Joanna, Austin, Stephen, Hayden
 ## Software Description
 
 This prototype includes a small Python API that runs a feedback loop between
-two Gemini-backed agents. The initial prompt entered on the website is used as
-the system prompt for both agents.
+two agents using Gemini, OpenAI, or Anthropic. The initial prompt entered on
+the website is used as the system prompt for both agents.
 
 ## Run it
 
@@ -25,7 +25,7 @@ Open PowerShell in this folder:
 
 In the same PowerShell window, run:
 
-    uvicorn server:app --app-dir python --reload
+    python -m uvicorn server:app --app-dir python --reload
 
 Keep this window open. The backend runs at:
 
@@ -52,22 +52,39 @@ Keep this window open too. Open the website at:
 
     http://localhost:5500/html/index.html
 
-Enter an initial prompt and click Start Run. The website sends the prompt to
-the FastAPI backend at http://localhost:8000/api/run.
+Select each agent's model and enter an API key in the dialog when prompted.
+Enter an initial prompt and click Start Run. The website requests any missing
+keys before sending the run to http://localhost:8000/api/run/stream.
 
 ### 4. Stop the servers
 
 Press Ctrl+C in each PowerShell window when you are finished.
 
-## Environment variables and API keys
+## API keys for a run
 
-The .env file is ignored by Git and must not be committed. Never place a
-real API key in html/, javascript/, or any other browser-side file.
-If a key has been exposed or committed, revoke it and create a replacement.
+- Selecting a model prompts for its provider's API key if none is saved.
+- Keys are saved in sessionStorage for the current tab's session. Refreshing
+  the page retains them; they are not saved in localStorage or your account.
+- A provider's key is reused when both agents use that provider. Different
+  providers require different keys.
+- Use Change API key under a model selector to replace a key, or Clear saved
+  API keys to remove this application's keys from the tab.
+- Canceling the dialog cancels preparation of the run until a key is supplied.
+- The browser sends the selected models and keys to the FastAPI backend for
+  each run. The backend passes each key directly to that provider's model
+  client, without putting user keys in shared environment variables.
+- Keys are excluded from saved chats, JSON exports, and validation errors.
+  The backend does not save user keys to a file or database.
 
-The Gemini agents load the local .env file and use GEMINI_API_KEY. The key is
-mapped to GOOGLE_API_KEY for LangChain's Google integration. Never commit the
-.env file or place the key in browser-side files.
+The model choices are GPT-4o, Claude Sonnet 5.5, and Gemini 3.5 Flash Lite.
+Gemini is the default. Provider API access and usage charges apply to the key
+owner; a consumer chat subscription is not an API key.
+
+Use HTTPS for a hosted deployment. sessionStorage is readable by scripts on
+the site's origin, so it is temporary storage rather than an encrypted vault.
+Never hard-code real keys in source files or commit .env. The optional local
+.env remains supported for direct Python-agent development, but website runs
+require keys supplied through the dialog rather than using a shared server key.
 
 ## Structure
 
@@ -75,7 +92,8 @@ mapped to GOOGLE_API_KEY for LangChain's Google integration. Never commit the
 - css/styles.css - responsive visual styling
 - javascript/ - browser JavaScript modules and Firebase setup
 - python/server.py - FastAPI endpoint that runs the feedback loop
-- python/agents.py - Gemini Model A and Model B implementations
+- javascript/api-keys.js - provider key dialog and session storage
+- python/agents.py - Model A and Model B with per-request provider credentials
 - json/prompts.json - prompt data
 - requirements.txt - Python dependencies
 - assets/ - reserved for future icons or imagery

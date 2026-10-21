@@ -93,6 +93,19 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         if (!input.reportValidity()) return;
     }
 
+    let credentials;
+    startButton.disabled = true;
+    try {
+        credentials = await window.apiKeys.getRunCredentials();
+    } catch {
+        alert('Could not open the API-key dialog. Refresh the page and try again.');
+        return;
+    } finally {
+        startButton.disabled = false;
+    }
+    if (!credentials) return;
+    const [modelA, modelB] = credentials;
+
     updateModelCards();
     startButton.disabled = true;
     startButton.textContent = 'Running...';
@@ -122,10 +135,16 @@ document.querySelector('#start-run').addEventListener('click', async () => {
                 model_a_name: modelAName,
                 model_b_name: modelBName,
                 model_a_role: modelARole,
-                model_b_role: modelBRole
+                model_b_role: modelBRole,
+                model_a_model: modelA.model,
+                model_b_model: modelB.model,
+                model_a_api_key: modelA.apiKey,
+                model_b_api_key: modelB.apiKey
             })
         });
-        if (!response.ok) throw new Error('Server returned ' + response.status);
+        if (!response.ok) {
+            throw new Error('Could not start the run. Check your model selections and API keys, then try again.');
+        }
 
         if (!response.body) throw new Error('Streaming is not supported by this browser');
 
@@ -135,6 +154,9 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         let completedTurns = 0;
 
         function handleRunEvent(event) {
+            if (event.type === 'error') {
+                throw new Error(event.message);
+            }
             if (event.type === 'responding') {
                 setRespondingModel(completedTurns < turns ? event.name : '');
                 return;
@@ -181,8 +203,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         setRespondingModel();
         document.querySelector('#turn-status').textContent =
             'Run stopped before completion';
-        alert('Could not complete the conversation. Start the Python server with: uvicorn server:app --app-dir python --reload');
-        console.error(error);
+        alert(error.message || 'Could not complete the conversation. Please try again.');
     } finally {
         setRespondingModel();
         startButton.disabled = false;
