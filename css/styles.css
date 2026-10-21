@@ -993,3 +993,97 @@ footer span {
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+/* Community page */
+
+.community-main {
+    min-height: 590px;
+}
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+.community-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 175px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #e0e3e8;
+    border-radius: 3px;
+}
+.community-card h2 {
+    font-size: 13px;
+    color: #1c2740;
+    margin: 0 0 5px;
+    overflow-wrap: anywhere;
+}
+.community-byline {
+    font-size: 10px;
+    color: #737f91;
+    margin: 0 0 12px;
+}
+.community-preview {
+    font-size: 10px;
+    line-height: 1.6;
+    color: #4f5c72;
+    margin: 0 0 14px;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.community-card-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #edf0f4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.community-card-footer span {
+    font-size: 9px;
+    color: #737f91;
+    overflow-wrap: anywhere;
+}
+.community-card-footer button {
+    flex-shrink: 0;
+}
+.community-detail {
+    margin-top: 14px;
+    max-width: 950px;
+}
+.community-detail h2 {
+    font-size: 16px;
+    margin: 15px 0 5px;
+}
+.community-back {
+    font-size: 10px;
+    padding: 7px 12px;
+    border-radius: 3px;
+}
+.community-detail .run-messages {
+    margin-top: 16px;
+}
+.community-grid[hidden],
+.community-detail[hidden] {
+    display: none !important;
+}
+@media (max-width: 900px) {
+    .community-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 560px) {
+    .community-grid {
+        grid-template-columns: 1fr;
+    }
+}
