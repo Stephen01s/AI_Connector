@@ -139,6 +139,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     activeChatId = null;
     renderMessages(document.querySelector('#messages'));
     renderMessages(document.querySelector('#review-messages'));
+    document.querySelector('#run-prompt').textContent = prompt;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
     document.querySelector('#turn-count').textContent = '0 / ' + turns;
     setRespondingModel();
