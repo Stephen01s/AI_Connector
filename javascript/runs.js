@@ -85,7 +85,6 @@ async function loadRuns() {
                 visibilityButton.setAttribute('aria-pressed', String(isPublic));
                 visibilityButton.title = isPublic ? 'Public' : 'Private';
                 visibilityButton.innerHTML = isPublic ? eyeIcon() : eyeOffIcon();
-                communityButton.hidden = !isPublic;
                 status.textContent = isPublic ? 'Chat is now public.' : 'Chat is now private.';
             } catch (error) {
                 console.error('Could not change chat visibility:', error);
@@ -93,17 +92,6 @@ async function loadRuns() {
             } finally {
                 visibilityButton.disabled = false;
             }
-        });
-
-        const communityButton = document.createElement('button');
-        communityButton.type = 'button';
-        communityButton.className = 'run-card-action community-link';
-        communityButton.textContent = chat.title || 'Untitled run';
-        communityButton.title = 'View in Community';
-        communityButton.hidden = chat.isPublic !== true;
-        communityButton.addEventListener('click', event => {
-            event.stopPropagation();
-            window.location.href = `community.html?chat=${encodeURIComponent(chat.id)}`;
         });
 
         const deleteButton = document.createElement('button');
@@ -135,7 +123,7 @@ async function loadRuns() {
                 deleteButton.disabled = false;
             }
         });
-        actions.append(visibilityButton, communityButton, deleteButton);
+        actions.append(visibilityButton, deleteButton);
         card.append(button, actions);
         runsList.append(card);
     });

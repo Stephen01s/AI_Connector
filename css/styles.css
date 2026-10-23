@@ -838,14 +838,6 @@ footer span {
   stroke-width: 1.8;
 }
 
-.run-card-action.community-link {
-  max-width: 130px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 8px;
-}
-
 .run-card-action.delete-chat {
   color: #a33e3e;
   font-size: 19px;
