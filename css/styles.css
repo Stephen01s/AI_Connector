@@ -209,6 +209,23 @@ button {
   margin-bottom: 2px;
 }
 
+.run-prompt-panel {
+  margin-top: 14px;
+}
+
+.run-prompt-panel h2 {
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.run-prompt-panel p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .thread-panel {
   padding: 0 10px 13px;
 }
