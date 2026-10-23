@@ -833,8 +833,9 @@ footer span {
   }
 }
 
-/* Prompt and API-key controls */
-.random-prompt {
+/* Random prompt and API key buttons */
+.random-prompt,
+.api-key-button {
   display: block;
   width: 100%;
   margin: 1px 0 0;
@@ -848,31 +849,15 @@ footer span {
   font-weight: 400;
   line-height: 1.2;
   text-align: center;
-}
-
-/* API key button */
-.model-column .api-key-button {
-  display: block;
-  width: 100%;
-  margin: 7px 0 0;
-  padding: 9px 12px;
-  border: 1px solid #c8d5e8;
-  border-radius: 5px;
-  background: #e7edf7;
-  color: #405c87;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.2;
-  text-align: center;
   cursor: pointer;
 }
 
-.model-column .api-key-button:hover {
-  background: #d5e1f2;
+.random-prompt:hover,
+.api-key-button:hover {
+  background: #f5f6f8;
 }
 
-.model-column .api-key-button:focus-visible {
+.api-key-button:focus-visible {
   outline: 2px solid #405c87;
   outline-offset: 2px;
 }
