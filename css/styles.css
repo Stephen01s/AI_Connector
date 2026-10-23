@@ -834,8 +834,7 @@ footer span {
 }
 
 /* Prompt and API-key controls */
-.random-prompt,
-.api-key-button {
+.random-prompt {
   display: block;
   width: 100%;
   margin: 1px 0 0;
@@ -851,6 +850,33 @@ footer span {
   text-align: center;
 }
 
+/* API key button */
+.model-column .api-key-button {
+  display: block;
+  width: 100%;
+  margin: 7px 0 0;
+  padding: 9px 12px;
+  border: 1px solid #c8d5e8;
+  border-radius: 5px;
+  background: #e7edf7;
+  color: #405c87;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.model-column .api-key-button:hover {
+  background: #d5e1f2;
+}
+
+.model-column .api-key-button:focus-visible {
+  outline: 2px solid #405c87;
+  outline-offset: 2px;
+}
+
 .model-selection-label,
 .turn-limit-label {
   margin-bottom: 0;
@@ -862,16 +888,16 @@ footer span {
   display: block;
 }
 
-.model-column .api-key-button,
 #clear-api-keys {
   margin-bottom: 12px;
 }
 
 .api-key-status {
-  min-height: 14px;
-  margin: 5px 0 12px;
-  color: #777f8b;
-  font-size: 9px;
+  min-height: 16px;
+  margin: 5px 0 10px;
+  color: #238636;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .api-key-notice {
