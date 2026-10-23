@@ -1,10 +1,10 @@
 import {
-    collection, getDocs, query, where, orderBy
+    collection, doc, getDoc, getDocs, query, where, orderBy
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
-const username = localStorage.getItem(usernameSessionKey);
+const profileId = localStorage.getItem(usernameSessionKey);
 const status = document.querySelector('#runs-status');
 const runsList = document.querySelector('#runs-list');
 const runMessages = document.querySelector('#run-messages');
@@ -17,10 +17,9 @@ document.querySelectorAll('[data-page]').forEach(button => {
     });
 });
 
-if (!username) {
+if (!profileId) {
     window.location.replace('sign-in.html');
 } else {
-    document.querySelector('#runs-description').textContent = `Previous conversations for ${username}.`;
     loadRuns().catch(error => {
         console.error('Could not load runs:', error);
         status.textContent = 'Could not load your runs. Please refresh to try again.';
@@ -28,7 +27,15 @@ if (!username) {
 }
 
 async function loadRuns() {
-    const runsQuery = query(collection(db, 'chats'), where('userId', '==', username));
+    const profile = await getDoc(doc(db, 'users', profileId));
+    if (!profile.exists()) {
+        window.location.replace('sign-in.html');
+        return;
+    }
+    const username = profile.data().username || profileId;
+    document.querySelector('#runs-description').textContent = `Previous conversations for ${username}.`;
+
+    const runsQuery = query(collection(db, 'chats'), where('username', '==', username));
     const snapshot = await getDocs(runsQuery);
     const chats = snapshot.docs.map(chat => ({ id: chat.id, ...chat.data() }));
     chats.sort((a, b) => timestampMillis(b.updatedAt || b.createdAt) - timestampMillis(a.updatedAt || a.createdAt));
