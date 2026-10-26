@@ -60,6 +60,25 @@ keys before sending the run to http://localhost:8000/api/run/stream.
 
 Press Ctrl+C in each PowerShell window when you are finished.
 
+## Deploy the frontend to Netlify
+
+Use the repository root as the publish directory (`.`) and leave the build
+command empty. The frontend is plain HTML, CSS, and JavaScript and does not
+need a build step.
+
+The root `_redirects` file sends `/` to `/html/`, where the homepage lives.
+Publish the whole project layout rather than only `html/`, because the pages
+also use the sibling `css/`, `javascript/`, and `json/` folders.
+
+Commit and push `_redirects` to trigger a new Git-connected deploy. For a
+manual deploy, upload a folder containing `_redirects` and the `html/`,
+`css/`, `javascript/`, `json/`, and `assets/` frontend folders.
+The homepage will then open at https://jashai.netlify.app/.
+
+The frontend continues to call the FastAPI backend on Render using `API_URL`
+in `javascript/script.js`. Netlify's static deployment does not start the
+Python server.
+
 ## API keys for a run
 
 - Selecting a model prompts for its provider's API key if none is saved.

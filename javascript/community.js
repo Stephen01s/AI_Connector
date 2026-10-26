@@ -1,11 +1,6 @@
-
 import {
-    collection,
-    getDocs,
-    query,
-    orderBy
+    collection, doc, getDoc, getDocs, orderBy, query, where
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-
 import { db } from './firebase.js';
 import './account.js';
 
@@ -23,43 +18,30 @@ document.querySelectorAll('[data-page]').forEach(button => {
 });
 
 backButton.addEventListener('click', () => {
+    history.replaceState(null, '', 'community.html');
     communityDetail.hidden = true;
     communityList.hidden = false;
 });
 
 async function loadCommunity() {
-    communityList.replaceChildren();
+    const chatId = new URLSearchParams(window.location.search).get('chat');
+    if (chatId) {
+        await showPublicChat(chatId);
+        return;
+    }
 
+    communityList.replaceChildren();
     const loading = document.createElement('p');
     loading.textContent = 'Loading conversations...';
     communityList.append(loading);
-
     try {
-        const postsQuery = query(
-            collection(db, 'communityPosts'),
-            orderBy('createdAt', 'desc')
-        );
-
-        const snapshot = await getDocs(postsQuery);
+        const snapshot = await getDocs(query(collection(db, 'chats'), where('isPublic', '==', true)));
         communityList.replaceChildren();
-
-        if (snapshot.empty) {
-            showMessage('No conversations have been shared yet.');
-            return;
-        }
-
-        snapshot.forEach(documentSnapshot => {
-            const post = documentSnapshot.data();
-
-            if (post.isPublic !== true) return;
-
-            createCommunityCard(post);
-        });
-
-        if (communityList.children.length === 0) {
-            showMessage('No conversations have been shared yet.');
-        }
-
+        const chats = snapshot.docs
+            .map(item => ({ id: item.id, ...item.data() }))
+            .sort((a, b) => timestampMillis(b.updatedAt || b.createdAt) - timestampMillis(a.updatedAt || a.createdAt));
+        chats.forEach(createCommunityCard);
+        if (!chats.length) showMessage('No conversations have been shared yet.');
     } catch (error) {
         console.error('Could not load Community conversations:', error);
         communityList.replaceChildren();
@@ -67,82 +49,74 @@ async function loadCommunity() {
     }
 }
 
-function createCommunityCard(post) {
+function createCommunityCard(chat) {
     const card = document.createElement('article');
     card.className = 'community-card';
-
     const title = document.createElement('h2');
-    title.textContent = post.title || 'Untitled Conversation';
-
+    title.textContent = chat.title || 'Untitled Conversation';
     const author = document.createElement('p');
     author.className = 'community-byline';
-    author.textContent = `Shared by ${post.authorName || 'Anonymous'}`;
-
+    author.textContent = `Shared by ${chat.username || 'Anonymous'}`;
     const preview = document.createElement('p');
     preview.className = 'community-preview';
-    preview.textContent = post.preview || 'View this conversation.';
-
+    preview.textContent = 'View this conversation.';
     const footer = document.createElement('div');
     footer.className = 'community-card-footer';
-
     const date = document.createElement('span');
-    date.textContent = formatTimestamp(post.createdAt);
-
+    date.textContent = formatTimestamp(chat.updatedAt || chat.createdAt);
     const viewButton = document.createElement('button');
     viewButton.type = 'button';
     viewButton.className = 'light';
     viewButton.textContent = 'View Conversation';
-
     viewButton.addEventListener('click', () => {
-        showConversation(post);
+        history.pushState(null, '', `community.html?chat=${encodeURIComponent(chat.id)}`);
+        showPublicChat(chat.id);
     });
-
     footer.append(date, viewButton);
     card.append(title, author, preview, footer);
     communityList.append(card);
 }
 
-function showConversation(post) {
+async function showPublicChat(chatId) {
     communityList.hidden = true;
     communityDetail.hidden = false;
-
-    detailTitle.textContent = post.title || 'Untitled Conversation';
-    detailAuthor.textContent =
-        `Shared by ${post.authorName || 'Anonymous'}`;
-
+    detailTitle.textContent = 'Loading conversation…';
+    detailAuthor.textContent = '';
     communityMessages.replaceChildren();
-
-    const messages = Array.isArray(post.messages)
-        ? post.messages
-        : [];
-
-    if (messages.length === 0) {
-        const empty = document.createElement('p');
-        empty.textContent = 'No messages available.';
-        communityMessages.append(empty);
-        return;
+    try {
+        const chatRef = doc(db, 'chats', chatId);
+        const chatSnapshot = await getDoc(chatRef);
+        if (!chatSnapshot.exists() || chatSnapshot.data().isPublic !== true) {
+            throw new Error('This conversation is private or unavailable.');
+        }
+        const chat = chatSnapshot.data();
+        detailTitle.textContent = chat.title || 'Untitled Conversation';
+        detailAuthor.textContent = `Shared by ${chat.username || 'Anonymous'}`;
+        const messages = await getDocs(query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc')));
+        if (messages.empty) {
+            showDetailMessage('No messages available.');
+            return;
+        }
+        messages.forEach(message => {
+            const data = message.data();
+            const row = document.createElement('article');
+            row.className = 'run-message';
+            const byline = document.createElement('div');
+            byline.className = 'run-message-byline';
+            byline.textContent = `${data.agentId ? `${data.agentId} · ` : ''}${data.role || 'message'}`;
+            const content = document.createElement('p');
+            content.textContent = data.content || '';
+            const time = document.createElement('time');
+            time.textContent = formatTimestamp(data.timestamp);
+            row.append(byline, content, time);
+            communityMessages.append(row);
+        });
+    } catch (error) {
+        detailTitle.textContent = 'Conversation unavailable';
+        showDetailMessage(error.message === 'This conversation is private or unavailable.' || error.code === 'permission-denied'
+            ? 'This conversation is private or unavailable.'
+            : 'Could not load this conversation.');
     }
-
-    messages.forEach(message => {
-        const row = document.createElement('article');
-        row.className = 'run-message';
-
-        const byline = document.createElement('div');
-        byline.className = 'run-message-byline';
-        byline.textContent =
-            `${message.agentId ? message.agentId + ' · ' : ''}` +
-            (message.role || 'message');
-
-        const content = document.createElement('p');
-        content.textContent = message.content || '';
-
-        const time = document.createElement('time');
-        time.textContent = formatTimestamp(message.timestamp);
-
-        row.append(byline, content, time);
-        communityMessages.append(row);
-    });
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -152,12 +126,18 @@ function showMessage(message) {
     communityList.append(paragraph);
 }
 
-function formatTimestamp(timestamp) {
-    if (!timestamp?.toDate) {
-        return 'Date unavailable';
-    }
+function showDetailMessage(message) {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = message;
+    communityMessages.append(paragraph);
+}
 
-    return timestamp.toDate().toLocaleString();
+function timestampMillis(value) {
+    return value?.toDate ? value.toDate().getTime() : 0;
+}
+
+function formatTimestamp(timestamp) {
+    return timestamp?.toDate ? timestamp.toDate().toLocaleString() : 'Date unavailable';
 }
 
 loadCommunity();

@@ -6,7 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home — Jash</title>
-  <link rel="stylesheet" href="../css/styles.css?v=control-buttons-3" />
+  <link rel="stylesheet" href="../css/styles.css?v=initial-prompt-1" />
 </head>
 
 <body>
@@ -126,6 +126,10 @@
           <h1>Conversation</h1>
           <p id="turn-status">Run in progress...</p>
         </div>
+        <div class="panel run-prompt-panel">
+          <h2>Initial Prompt</h2>
+          <p id="run-prompt"></p>
+        </div>
         <div class="conversation-layout">
           <div class="panel thread-panel">
             <div class="messages" id="messages"></div>
@@ -220,7 +224,7 @@
   </dialog>
   <script defer src="../javascript/role-controls.js?v=1"></script>
   <script defer src="../javascript/api-keys.js?v=1"></script>
-  <script type="module" src="../javascript/script.js?v=render-local-time-1"></script>
+  <script type="module" src="../javascript/script.js?v=initial-prompt-1"></script>
 </body>
 
 </html>

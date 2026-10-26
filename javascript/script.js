@@ -1,5 +1,5 @@
 import {
-    addDoc, collection, serverTimestamp
+    addDoc, collection, doc, getDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
@@ -139,6 +139,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     activeChatId = null;
     renderMessages(document.querySelector('#messages'));
     renderMessages(document.querySelector('#review-messages'));
+    document.querySelector('#run-prompt').textContent = prompt;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
     document.querySelector('#turn-count').textContent = '0 / ' + turns;
     setRespondingModel();
@@ -238,12 +239,15 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 });
 
 async function saveRun(prompt, runMessages) {
-    const username = localStorage.getItem(usernameSessionKey);
-    if (!username) return null;
+    const profileId = localStorage.getItem(usernameSessionKey);
+    if (!profileId) return null;
 
     try {
+        const profile = await getDoc(doc(db, 'users', profileId));
+        if (!profile.exists()) return null;
+        const username = profile.data().username || profileId;
         const chat = await addDoc(collection(db, 'chats'), {
-            userId: username,
+            userId: profileId,
             username,
             title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
             createdAt: serverTimestamp(),
