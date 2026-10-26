@@ -1,5 +1,5 @@
 import {
-    addDoc, collection, serverTimestamp
+    addDoc, collection, doc, getDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
@@ -31,22 +31,22 @@ function formatMessageTime(time) {
     const date = new Date(time);
     // Keep older clock-only values readable during a server redeploy.
     if (Number.isNaN(date.getTime())) return time;
-    return date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+    return date.toLocaleString();
 }
 
 function renderMessages(target) {
     if (!target) return;
     target.replaceChildren(...messages.map(([name, role, text, time]) => {
-        const message = document.createElement('div');
-        message.className = 'message';
-        message.innerHTML = '<div class="avatar"></div>' +
-            '<div><strong><span></span> <small style="display:inline"></small></strong>' +
-            '<p></p></div><span class="time"></span>';
-        message.querySelector('.avatar').textContent = name[0];
-        message.querySelector('strong span').textContent = name;
-        message.querySelector('small').textContent = '(' + role + ')';
-        message.querySelector('p').textContent = text;
-        message.querySelector('.time').textContent = formatMessageTime(time);
+        const message = document.createElement('article');
+        message.className = 'run-message';
+        const byline = document.createElement('div');
+        byline.className = 'run-message-byline';
+        byline.textContent = role ? name + ' · ' + role : name;
+        const content = document.createElement('p');
+        content.textContent = text;
+        const timestamp = document.createElement('time');
+        timestamp.textContent = formatMessageTime(time);
+        message.append(byline, content, timestamp);
         return message;
     }));
 }
@@ -139,6 +139,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     activeChatId = null;
     renderMessages(document.querySelector('#messages'));
     renderMessages(document.querySelector('#review-messages'));
+    document.querySelector('#run-prompt').textContent = prompt;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
     document.querySelector('#turn-count').textContent = '0 / ' + turns;
     setRespondingModel();
@@ -238,12 +239,15 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 });
 
 async function saveRun(prompt, runMessages) {
-    const username = localStorage.getItem(usernameSessionKey);
-    if (!username) return null;
+    const profileId = localStorage.getItem(usernameSessionKey);
+    if (!profileId) return null;
 
     try {
+        const profile = await getDoc(doc(db, 'users', profileId));
+        if (!profile.exists()) return null;
+        const username = profile.data().username || profileId;
         const chat = await addDoc(collection(db, 'chats'), {
-            userId: username,
+            userId: profileId,
             username,
             title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
             createdAt: serverTimestamp(),

@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 
@@ -5,7 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home — Jash</title>
-  <link rel="stylesheet" href="../css/styles.css?v=control-buttons-3" />
+  <link rel="stylesheet" href="../css/styles.css?v=conversation-cards-1" />
 </head>
 
 <body>
@@ -46,7 +47,7 @@
                   </select>
                 </label>
                 <button id="model-a-api-key" class="light full api-key-button" type="button">Set API key</button>
-                <!-- <p id="model-a-key-status" class="api-key-status" role="status"></p> -->
+                <p id="model-a-key-status" class="api-key-status" role="status"></p>
                 <label>Role
                   <select id="model-a-role" data-custom-role-input="model-a-custom-role">
                     <option value="">Select a role...</option>
@@ -73,7 +74,7 @@
                   </select>
                 </label>
                 <button id="model-b-api-key" class="light full api-key-button" type="button">Set API key</button>
-                <!-- <p id="model-b-key-status" class="api-key-status" role="status"></p> -->
+                <p id="model-b-key-status" class="api-key-status" role="status"></p>
                 <label>Role
                   <select id="model-b-role" data-custom-role-input="model-b-custom-role">
                     <option value="">Select a role...</option>
@@ -125,8 +126,12 @@
           <h1>Conversation</h1>
           <p id="turn-status">Run in progress...</p>
         </div>
+        <div class="panel run-prompt-panel">
+          <h2>Initial Prompt</h2>
+          <p id="run-prompt"></p>
+        </div>
         <div class="conversation-layout">
-          <div class="panel thread-panel">
+          <div class="thread-panel">
             <div class="messages" id="messages"></div>
             <div class="composer">
               <input id="message-input" placeholder="Add a message (optional)..." />
@@ -219,7 +224,7 @@
   </dialog>
   <script defer src="../javascript/role-controls.js?v=1"></script>
   <script defer src="../javascript/api-keys.js?v=1"></script>
-  <script type="module" src="../javascript/script.js?v=render-local-time-1"></script>
+  <script type="module" src="../javascript/script.js?v=conversation-cards-1"></script>
 </body>
 
 </html>
