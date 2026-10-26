@@ -227,11 +227,14 @@ button {
 }
 
 .thread-panel {
-  padding: 0 10px 13px;
+  min-width: 0;
+  padding: 0;
 }
 
-.messages {
-  border-top: 0;
+.messages,
+#review-messages {
+  display: grid;
+  gap: 8px;
 }
 
 .message {
@@ -867,6 +870,7 @@ footer span {
 }
 
 .run-message {
+  min-width: 0;
   padding: 10px 11px;
   border: 1px solid #e7e9ed;
   border-radius: 3px;
