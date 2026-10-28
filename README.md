@@ -56,6 +56,10 @@ Select each agent's model and enter an API key in the dialog when prompted.
 Enter an initial prompt and click Start Run. The website requests any missing
 keys before sending the run to http://localhost:8000/api/run/stream.
 
+
+New website
+[jashai.nelify.app](https://jashai.netlify.app/html/)
+
 ### 4. Stop the servers
 
 Press Ctrl+C in each PowerShell window when you are finished.

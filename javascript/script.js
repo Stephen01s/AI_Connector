@@ -31,22 +31,22 @@ function formatMessageTime(time) {
     const date = new Date(time);
     // Keep older clock-only values readable during a server redeploy.
     if (Number.isNaN(date.getTime())) return time;
-    return date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+    return date.toLocaleString();
 }
 
 function renderMessages(target) {
     if (!target) return;
     target.replaceChildren(...messages.map(([name, role, text, time]) => {
-        const message = document.createElement('div');
-        message.className = 'message';
-        message.innerHTML = '<div class="avatar"></div>' +
-            '<div><strong><span></span> <small style="display:inline"></small></strong>' +
-            '<p></p></div><span class="time"></span>';
-        message.querySelector('.avatar').textContent = name[0];
-        message.querySelector('strong span').textContent = name;
-        message.querySelector('small').textContent = '(' + role + ')';
-        message.querySelector('p').textContent = text;
-        message.querySelector('.time').textContent = formatMessageTime(time);
+        const message = document.createElement('article');
+        message.className = 'run-message';
+        const byline = document.createElement('div');
+        byline.className = 'run-message-byline';
+        byline.textContent = role ? name + ' · ' + role : name;
+        const content = document.createElement('p');
+        content.textContent = text;
+        const timestamp = document.createElement('time');
+        timestamp.textContent = formatMessageTime(time);
+        message.append(byline, content, timestamp);
         return message;
     }));
 }
