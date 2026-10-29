@@ -1,48 +1,57 @@
+
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Community — Jash</title>
-        <link rel="stylesheet" href="../css/styles.css" />
-    </head>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+    <title>Community — Jash</title>
+    <link rel = "stylesheet" href = "../css/styles.css">
+</head>
 
-    <body>
-        <div class = "app-shell">
-            <header class = "topbar">
-                <div class = "brand">
-                    <span class = "brand-mark">◈</span> Jash
-                </div>
-                <nav class = "nav-links" aria-label = "Main navigation">
-                <button type="button" data-page="index.html">⌂&nbsp; Home</button>
-                <button type="button" data-page="runs.html" aria-current="page">◌&nbsp; Runs</button>
-                <button type="button" data-page="community.html">♧&nbsp; Community</button>
-                </nav>
-
-                <div class = "account-actions">
-                    <button class = "sign-in" id = "user-settings" type = "button">User Settings</button>
-                    <button class = "sign-in" id = "sign-out" type = "button">Sign Out</button>
-                    <button class = "sign-in" id = "sign-in-nav" type = "button" hidden>Sign In</button>
-                </div>
-            </header>
-
-            <main class = "community-main">
+<body>
+    <div class = "app-shell">
+        <header class = "topbar">
+            <div class = "brand">
+                <span class="brand-mark">◈</span> Jash
+            </div>
+            <nav class = "nav-links" aria-label = "Main navigation">
+                <button type = "button" data-page = "index.html">⌂&nbsp; Home</button>
+                <button type = "button" data-page = "runs.html">◌&nbsp; Runs</button>
+                <button type = "button" data-page = "community.html" aria-current = "page">♧&nbsp; Community</button>            </nav>
+            <button type = "button" class = "theme-toggle" id = "theme-toggle" aria-label = "Toggle dark mode">☾</button>
+            <div class = "account-actions">
+                <button type = "button" class = "sign-in" data-page = "settings.html">User Settings</button>
+                <button type = "button" class = "sign-in" id = "sign-out-button">Sign Out</button>
+            </div>
+        </header>
+        <main class = "community-main">
+            <div class = "community-header">
                 <div class = "page-heading">
                     <h1>Community</h1>
                     <p>See conversations shared by the community</p>
                 </div>
-
-                <section id = "community-list" class = "community-grid" aria-label = "Public conversations"></section>
-
-                <section id = "community-detail" class = "panel community-detail" hidden>
-                    <button class = "light community-back" id = "community-back" type = "button">Back to Community</button>
-                    <h2 id = "community-detail-title"></h2>
-                    <p class = "community-byline" id = "community-detail-author"></p>
-                    <div id = "community-messages" class = "run-messages"></div>
-                </section>
-            </main>
-        </div>
-
-        <script type="module" src="../javascript/community.js"></script>
-    </body>
+                <div class = "community-mode-switch">
+                    <button id = "community-real-btn" type = "button" class = "community-mode-btn active" aria-pressed = "true">Community</button>
+                    <button id = "community-demo-btn" type = "button" class = "community-mode-btn" aria-pressed = "false">Preview</button>
+                </div>
+            </div>
+            <div id = "community-list" aria-live = "polite"></div>
+        </main>
+        <section id = "community-detail" role = "dialog" aria-modal = "true" aria-labelledby = "community-detail-title" hidden>
+            <div class = "community-popup-content">
+                <button id = "community-back" type = "button" class = "light">✕ Close</button>
+                <h2 id = "community-detail-title"></h2>
+                <p id = "community-detail-author"></p>
+                <div id = "community-messages"></div>
+            </div>
+        </section>
+        <footer>
+            <span>Jash AI</span>
+        </footer>
+    </div>
+    <script
+        type = "module"
+        src = "../javascript/community.js">
+    </script>
+</body>
 </html>

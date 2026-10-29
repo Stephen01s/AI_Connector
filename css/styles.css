@@ -1141,3 +1141,268 @@ footer span {
     background: #353d4b;
     border-color: #596579;
 }
+
+/* Community conversation card layout */
+#community-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Keep demo message above the cards */
+.community-demo-notice {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* Individual conversation cards */
+.community-card {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dce2eb;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover effect */
+.community-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* Conversation title */
+.community-card h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Username */
+.community-byline {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Converation description */
+.community-preview {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+/* Bottom section of card */
+.community-card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Date */
+.community-card-footer span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* View conversation button */
+.community-card-footer button {
+  background: #536687;
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.community-card-footer button:hover {
+  background: #40516e;
+}
+
+/* Centered conversation popup overlay */
+#community-detail:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100dvh;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.65);
+  overflow-y: auto;
+}
+
+/* Popup card content */
+#community-detail:not([hidden]) > * {
+  width: 100%;
+  max-width: 700px;
+  box-sizing: border-box;
+}
+
+/* Popup card appearance */
+.community-popup-content {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 25px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* Conversation messages */
+#community-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Individual message */
+#community-messages .run-message {
+  background: #f3f5f9;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* Community / Preview toggle */
+.community-mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  margin: 16px 0 20px;
+  padding: 4px;
+  border: 1px solid #dce2eb;
+  border-radius: 9px;
+  background: #e9edf3;
+}
+
+.community-mode-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #536687;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.community-mode-btn.active {
+  background: #536687;
+  color: #ffffff;
+}
+
+.community-mode-btn:hover:not(.active) {
+  background: #d5deec;
+}
+
+/* Community / Preview toggle dark mode */
+.dark-mode .community-mode-switch {
+  background: #292f3a;
+  border-color: #414958;
+}
+
+.dark-mode .community-mode-btn {
+  color: #c7cdd8;
+}
+
+.dark-mode .community-mode-btn.active {
+  background: #536687;
+  color: #ffffff;
+}
+
+.dark-mode .community-mode-btn:hover:not(.active) {
+  background: #353d4b;
+}
+
+/* Center navigation on Community page */
+body:has(.community-main) .topbar {
+  position: relative;
+}
+
+body:has(.community-main) .nav-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+/* Community page heading */
+.community-main .page-heading h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.community-main .page-heading p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Community header layout */
+.community-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #dfe2e6;
+}
+
+.community-header .community-mode-switch {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Community header dark mode */
+.dark-mode .community-header {
+  border-color: #39414e;
+}
+
+/* Community header mobile layout */
+@media (max-width: 600px) {
+  .community-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+} 
+
+/* Mobile Layout */
+@media (max-width: 600px) {
+  #community-list {
+    grid-template-columns: 1fr;
+  }
+  .community-card {
+    min-height: auto;
+  }
+  .community-popup-content {
+    padding: 16px;
+    max-height: 90vh;
+  }
+}
