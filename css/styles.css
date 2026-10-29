@@ -1128,3 +1128,16 @@ footer span {
   gap: 6px;
   margin-left: 0;
 }
+
+.dark-mode .api-key-button,
+.dark-mode #clear-api-keys {
+    background: #292f3a;
+    color: #c7cdd8;
+    border: 1px solid #414958;
+}
+
+.dark-mode .api-key-button:hover,
+.dark-mode #clear-api-keys:hover {
+    background: #353d4b;
+    border-color: #596579;
+}
