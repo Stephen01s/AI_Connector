@@ -25,8 +25,11 @@
         }
     }
 
-    function getModelSelection(select) {
-        const option = select.selectedOptions[0];
+    function getModelSelection(select, model = null) {
+        const option = model
+            ? [...select.options].find(option => option.value === model)
+            : select.selectedOptions[0];
+        if (!option) throw new Error('The selected model is unavailable.');
         return {
             model: option.value,
             provider: option.dataset.provider,
@@ -144,9 +147,11 @@
         return request;
     }
 
-    async function getRunCredentials() {
-        // Capture model choices before opening API key dialogs.
-        const selections = modelSelects.map(getModelSelection);
+    async function getRunCredentials(models = null) {
+        // Continuations use the original run's models even if setup changes.
+        const selections = modelSelects.map((select, index) =>
+            getModelSelection(select, models?.[index])
+        );
         const credentials = [];
         for (const selection of selections) {
             const apiKey = await requestKey(selection);

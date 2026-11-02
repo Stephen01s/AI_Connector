@@ -6,7 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home — Jash</title>
-  <link rel="stylesheet" href="../css/styles.css?v=conversation-cards-1" />
+  <link rel="stylesheet" href="../css/styles.css?v=conversation-follow-ups-1" />
 </head>
 
 <body>
@@ -133,15 +133,10 @@
         <div class="conversation-layout">
           <div class="thread-panel">
             <div class="messages" id="messages"></div>
-            <div class="composer">
-              <input id="message-input" placeholder="Add a message (optional)..." />
-              <button class="primary" id="send-message">Send ↗</button>
-            </div>
-            <div class="thread-controls">
-              <button>Ⅱ&nbsp; Pause</button>
-              <button class="danger">□&nbsp; Stop</button>
-              <span id="responding-model" role="status" aria-live="polite" hidden></span>
-            </div>
+            <form class="composer" id="message-form">
+              <input id="message-input" aria-label="Follow-up message" placeholder="Add a message to continue the conversation..." required disabled />
+              <button class="primary" id="send-message" type="submit" disabled>Send ↗</button>
+            </form>
           </div>
           <aside class="panel details-panel">
             <h2>Run Details</h2>
@@ -223,8 +218,8 @@
     </form>
   </dialog>
   <script defer src="../javascript/role-controls.js?v=1"></script>
-  <script defer src="../javascript/api-keys.js?v=1"></script>
-  <script type="module" src="../javascript/script.js?v=conversation-cards-1"></script>
+  <script defer src="../javascript/api-keys.js?v=conversation-follow-ups-1"></script>
+  <script type="module" src="../javascript/script.js?v=cumulative-turns-1"></script>
 </body>
 
 </html>
