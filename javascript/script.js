@@ -1,5 +1,5 @@
 import {
-    addDoc, collection, doc, getDoc, serverTimestamp
+    addDoc, collection, doc, getDoc, serverTimestamp, writeBatch
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
@@ -26,6 +26,10 @@ if (themeToggle) {
 let messages = [];
 let activeChatId = null;
 let prompts = [];
+let currentRun = null;
+let isRunning = false;
+let savedMessageCount = 0;
+let completedTurns = 0;
 
 function formatMessageTime(time) {
     const date = new Date(time);
@@ -61,12 +65,23 @@ function show(name) {
 
 function setRespondingModel(name = '') {
     const indicator = document.querySelector('#responding-model');
+    if (!indicator) return;
     indicator.textContent = name ? '◌ ' + name + ' is responding...' : '';
     indicator.hidden = !name;
 }
 
+function setRunBusy(busy) {
+    isRunning = busy;
+    const startButton = document.querySelector('#start-run');
+    startButton.disabled = busy;
+    startButton.textContent = busy ? 'Running...' : 'Start Run';
+    document.querySelector('#send-message').disabled = busy || !currentRun;
+    document.querySelector('#message-input').disabled = busy || !currentRun;
+}
+
 renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
+setRunBusy(false);
 
 document.querySelector('#random-prompt').addEventListener('click', async () => {
     const promptInput = document.querySelector('#initial-prompt');
@@ -99,18 +114,19 @@ document.querySelectorAll('[data-nav]').forEach(button =>
 );
 
 document.querySelector('#start-run').addEventListener('click', async () => {
+    if (isRunning) return;
     const prompt = document.querySelector('#initial-prompt').value.trim();
     const turns = Number(document.querySelector('#turn-limit').value);
     const modelAName = document.querySelector('#model-a-name').value.trim();
     const modelBName = document.querySelector('#model-b-name').value.trim();
     const modelARole = getRoleValue('#model-a-role');
     const modelBRole = getRoleValue('#model-b-role');
-    const startButton = document.querySelector('#start-run');
 
     if (!prompt) {
         alert('Please enter an initial prompt first.');
         return;
     }
+    if (!document.querySelector('#turn-limit').reportValidity()) return;
 
     for (const select of document.querySelectorAll('[data-custom-role-input]')) {
         if (select.value !== 'custom') continue;
@@ -119,52 +135,62 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         if (!input.reportValidity()) return;
     }
 
-    let credentials;
-    startButton.disabled = true;
+    setRunBusy(true);
     try {
-        credentials = await window.apiKeys.getRunCredentials();
+        const credentials = await window.apiKeys.getRunCredentials();
+        if (!credentials) return;
+        const [modelA, modelB] = credentials;
+        // Keep the run's settings, but read keys from session storage each round.
+        currentRun = {
+            prompt,
+            turns,
+            model_a_name: modelAName,
+            model_b_name: modelBName,
+            model_a_role: modelARole,
+            model_b_role: modelBRole,
+            model_a_model: modelA.model,
+            model_b_model: modelB.model
+        };
+        updateModelCards();
+        messages = [];
+        activeChatId = null;
+        savedMessageCount = 0;
+        completedTurns = 0;
+        document.querySelector('#message-input').value = '';
+        renderMessages(document.querySelector('#messages'));
+        renderMessages(document.querySelector('#review-messages'));
+        document.querySelector('#run-prompt').textContent = prompt;
+        document.querySelector('#turn-status').textContent = 'Run in progress...';
+        document.querySelector('#turn-count').textContent = '0 / ' + turns;
+        setRespondingModel();
+        show('conversation');
+        // Paint the conversation screen before starting a slow model request.
+        await new Promise(resolve =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))
+        );
+        await runConversationRound(credentials);
     } catch {
-        alert('Could not open the API-key dialog. Refresh the page and try again.');
-        return;
+        alert('Could not prepare the run. Refresh the page and try again.');
     } finally {
-        startButton.disabled = false;
+        setRunBusy(false);
     }
-    if (!credentials) return;
-    const [modelA, modelB] = credentials;
+});
 
-    updateModelCards();
-    startButton.disabled = true;
-    startButton.textContent = 'Running...';
-    messages = [];
-    activeChatId = null;
-    renderMessages(document.querySelector('#messages'));
-    renderMessages(document.querySelector('#review-messages'));
-    document.querySelector('#run-prompt').textContent = prompt;
+async function runConversationRound([modelA, modelB]) {
+    const {turns} = currentRun;
+    // Each follow-up adds another round to the conversation's AI turn count.
+    const targetTurns = completedTurns + turns;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
-    document.querySelector('#turn-count').textContent = '0 / ' + turns;
+    document.querySelector('#turn-count').textContent = completedTurns + ' / ' + targetTurns;
     setRespondingModel();
-    show('conversation');
-    // Let the browser paint the conversation screen before starting the
-    // request that may take several seconds.
-    await new Promise(resolve =>
-        requestAnimationFrame(() =>
-            requestAnimationFrame(resolve)
-        )
-    );
 
     try {
         const response = await fetch(API_URL + '/api/run/stream', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                prompt,
-                turns,
-                model_a_name: modelAName,
-                model_b_name: modelBName,
-                model_a_role: modelARole,
-                model_b_role: modelBRole,
-                model_a_model: modelA.model,
-                model_b_model: modelB.model,
+                ...currentRun,
+                history: messages.map(([name, role, text]) => ({name, role, text})),
                 model_a_api_key: modelA.apiKey,
                 model_b_api_key: modelB.apiKey
             })
@@ -178,14 +204,13 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
-        let completedTurns = 0;
 
         function handleRunEvent(event) {
             if (event.type === 'error') {
                 throw new Error(event.message);
             }
             if (event.type === 'responding') {
-                setRespondingModel(completedTurns < turns ? event.name : '');
+                setRespondingModel(completedTurns < targetTurns ? event.name : '');
                 return;
             }
 
@@ -198,7 +223,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
             document.querySelector('#turn-status').textContent =
                 event.name + ' responded (' + completedTurns + ' turns)';
             document.querySelector('#turn-count').textContent =
-                completedTurns + ' / ' + turns;
+                completedTurns + ' / ' + targetTurns;
             setRespondingModel();
         }
 
@@ -223,9 +248,6 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 
         document.querySelector('#turn-status').textContent =
             'Run completed (' + completedTurns + ' turns)';
-        activeChatId = await saveRun(prompt, messages.map(([name, role, text]) => ({
-            name, role, text
-        })));
     } catch (error) {
         setRespondingModel();
         document.querySelector('#turn-status').textContent =
@@ -233,37 +255,47 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         alert(error.message || 'Could not complete the conversation. Please try again.');
     } finally {
         setRespondingModel();
-        startButton.disabled = false;
-        startButton.textContent = 'Start Run';
+        // Save visible messages, including partial rounds, without duplicating
+        // messages from earlier rounds.
+        if (messages.length > savedMessageCount) await saveRun();
     }
-});
+}
 
-async function saveRun(prompt, runMessages) {
+async function saveRun() {
     const profileId = localStorage.getItem(usernameSessionKey);
     if (!profileId) return null;
 
     try {
-        const profile = await getDoc(doc(db, 'users', profileId));
-        if (!profile.exists()) return null;
-        const username = profile.data().username || profileId;
-        const chat = await addDoc(collection(db, 'chats'), {
-            userId: profileId,
-            username,
-            title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        });
-        await Promise.all(runMessages.map(message => addDoc(
-            collection(db, 'chats', chat.id, 'messages'),
-            {
-                role: message.role || 'assistant',
-                agentId: message.name || null,
-                content: message.text || '',
-                timestamp: serverTimestamp()
-            }
-        )));
+        if (!activeChatId) {
+            const profile = await getDoc(doc(db, 'users', profileId));
+            if (!profile.exists()) return;
+            const username = profile.data().username || profileId;
+            const {prompt} = currentRun;
+            const chat = await addDoc(collection(db, 'chats'), {
+                userId: profileId,
+                username,
+                title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            activeChatId = chat.id;
+        }
+
+        const batch = writeBatch(db);
+        for (const [name, role, text, time] of messages.slice(savedMessageCount)) {
+            batch.set(doc(collection(db, 'chats', activeChatId, 'messages')), {
+                role: role || 'assistant',
+                agentId: name || null,
+                content: text || '',
+                // A batch shares one server timestamp; retain actual message
+                // times so saved conversations stay in chronological order.
+                timestamp: new Date(time)
+            });
+        }
+        batch.update(doc(db, 'chats', activeChatId), {updatedAt: serverTimestamp()});
+        await batch.commit();
+        savedMessageCount = messages.length;
         document.querySelector('#turn-status').textContent += ' · Saved to your runs';
-        return chat.id;
     } catch (error) {
         console.error('Could not save run to Firestore:', error);
         document.querySelector('#turn-status').textContent += ' · Could not save to your runs';
@@ -271,20 +303,30 @@ async function saveRun(prompt, runMessages) {
     }
 }
 
-document.querySelector('#send-message').addEventListener('click', () => {
+document.querySelector('#message-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (isRunning || !currentRun) return;
     const input = document.querySelector('#message-input');
     if (!input.value.trim()) return;
     const content = input.value.trim();
-    messages.push(['Human', 'Moderator', content, new Date().toISOString()]);
-    renderMessages(document.querySelector('#messages'));
-    input.value = '';
-    if (activeChatId) {
-        addDoc(collection(db, 'chats', activeChatId, 'messages'), {
-            role: 'Moderator',
-            agentId: 'Human',
-            content,
-            timestamp: serverTimestamp()
-        }).catch(error => console.error('Could not save moderator message:', error));
+
+    setRunBusy(true);
+    try {
+        const credentials = await window.apiKeys.getRunCredentials([
+            currentRun.model_a_model, currentRun.model_b_model
+        ]);
+        // Leave the draft and transcript unchanged if key entry is canceled.
+        if (!credentials) return;
+        messages.push(['Human', 'Moderator', content, new Date().toISOString()]);
+        renderMessages(document.querySelector('#messages'));
+        renderMessages(document.querySelector('#review-messages'));
+        input.value = '';
+        await runConversationRound(credentials);
+    } catch {
+        alert('Could not prepare the follow-up. Your message has not been sent.');
+    } finally {
+        setRunBusy(false);
+        input.focus();
     }
 });
 

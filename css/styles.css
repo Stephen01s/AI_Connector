@@ -292,6 +292,11 @@ button {
   flex: 1;
 }
 
+.composer :disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .thread-controls {
   display: flex;
   gap: 6px;
