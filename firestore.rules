@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Temporary compatibility for the current username-only sign-in flow.
+    // Anyone with the app's Firebase config can access all database data
+    // until this date; replace with owner checks after account auth is updated.
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2027, 10, 29);
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[debug] [2026-11-02T16:45:46.542Z] ----------------------------------------------------------------------
+[debug] [2026-11-02T16:45:46.553Z] Command:       /usr/local/bin/node /tmp/ai-connector-npm-cache/_npx/7750544ccf494d8b/node_modules/.bin/firebase deploy --only firestore:rules --project signintest-8f353
+[debug] [2026-11-02T16:45:46.554Z] CLI Version:   15.34.2
+[debug] [2026-11-02T16:45:46.554Z] Platform:      darwin
+[debug] [2026-11-02T16:45:46.555Z] Node Version:  v20.11.0
+[debug] [2026-11-02T16:45:46.556Z] Detected Agent: codex_cli
+[debug] [2026-11-02T16:45:46.556Z] Time:          Mon Nov 02 2026 09:45:46 GMT-0700 (Mountain Standard Time)
+[debug] [2026-11-02T16:45:46.556Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-11-02T16:45:46.599Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[error] 
+[error] Error: Not in a Firebase app directory (could not locate firebase.json)

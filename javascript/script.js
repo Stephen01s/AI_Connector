@@ -4,7 +4,7 @@ import {
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
-const {getRoleValue, updateModelCards} = window.roleControls;
+const { getRoleValue, updateModelCards } = window.roleControls;
 const API_URL = 'https://ai-connector-szkl.onrender.com';
 const themeToggle = document.querySelector('#theme-toggle');
 const savedTheme = localStorage.getItem('jash-theme');
@@ -75,7 +75,7 @@ document.querySelector('#random-prompt').addEventListener('click', async () => {
         if (!prompts.length) {
             const response = await fetch('../json/prompts.json');
             if (!response.ok) throw new Error('Could not load prompts');
-            ({prompts} = await response.json());
+            ({ prompts } = await response.json());
         }
 
         promptInput.value = prompts[Math.floor(Math.random() * prompts.length)];
@@ -155,7 +155,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     try {
         const response = await fetch(API_URL + '/api/run/stream', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 prompt,
                 turns,
@@ -203,8 +203,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         }
 
         while (true) {
-            const {value, done} = await reader.read();
-            buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
 
             const lines = buffer.split('\n');
             buffer = lines.pop();
@@ -295,8 +295,8 @@ document.querySelector('#save-local').addEventListener('click', () =>
 
 document.querySelector('#export-json').addEventListener('click', () => {
     const blob = new Blob([
-        JSON.stringify({mode: 'Cooperative Task', messages}, null, 2)
-    ], {type: 'application/json'});
+        JSON.stringify({ mode: 'Cooperative Task', messages }, null, 2)
+    ], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
