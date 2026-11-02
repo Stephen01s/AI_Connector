@@ -275,6 +275,7 @@ async function saveRun() {
                 userId: profileId,
                 username,
                 title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
+                preview: runMessages[0]?.text?.slice(0, 120) || '',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
