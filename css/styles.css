@@ -1340,11 +1340,11 @@ footer span {
 }
 
 /* Center navigation on Community page */
-body:has(.community-main) .topbar {
+body .topbar {
   position: relative;
 }
 
-body:has(.community-main) .nav-links {
+body .nav-links {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
