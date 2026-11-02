@@ -109,6 +109,45 @@ Never hard-code real keys in source files or commit .env. The optional local
 .env remains supported for direct Python-agent development, but website runs
 require keys supplied through the dialog rather than using a shared server key.
 
+## Continue a conversation
+
+After a round finishes, enter a follow-up in the conversation's message box
+and click Send (or press Enter). Your message stays in the transcript, and
+the agents run another round using the original models, roles, display
+names, initial prompt, and turn limit.
+
+For example, a turn limit of 6 produces 6 more AI replies for each follow-up,
+alternating between Model A and Model B. The turn counter is cumulative:
+after 6 / 6, a follow-up starts at 6 / 12 and advances to 12 / 12. Another
+follow-up advances from 12 / 18 to 18 / 18. Human messages do not count as AI
+turns, and starting a new run resets the count. Earlier messages remain
+visible. Each agent receives the complete transcript, including your feedback
+and any new replies from that round.
+
+Sending is disabled while a round is running. Saved provider keys are
+reused, or the API-key dialog opens if a key has been cleared. While signed
+in, follow-up messages and replies are appended to the same saved run,
+rather than creating a new chat.
+
+Conversation state is currently kept on the open page; refreshing it does
+not restore a conversation for continuation. Full history is sent with each
+request, so very long conversations can increase API costs or reach a
+model's context limit.
+
+Deploy both the frontend and the updated Python backend for follow-ups to
+work on the hosted site. The current API_URL in javascript/script.js points
+to Render; change it to http://localhost:8000 to test against a local backend.
+
+## Offline regression tests
+
+With the Python dependencies and Node.js installed, run from this folder:
+
+    python -B -m unittest discover -s tests -p test_*.py -v
+    node --test tests/conversation.test.cjs
+
+These tests mock AI providers and Firebase; they do not make paid model calls
+or write to the hosted database.
+
 ## Structure
 
 - html/ - HTML pages for the application

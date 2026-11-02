@@ -32,9 +32,17 @@ app.add_middleware(
 )
 
 
+class ConversationMessage(BaseModel):
+    """The text and speaker labels needed to resume a conversation."""
+    name: str
+    role: str
+    text: str
+
+
 class RunRequest(BaseModel):
     prompt: str = Field(min_length=1)
     turns: int = Field(default=6, ge=1, le=20)
+    history: list[ConversationMessage] = Field(default_factory=list)
     model_a_name: str | None = Field(default=None, max_length=50)
     model_b_name: str | None = Field(default=None, max_length=50)
     model_a_role: str | None = Field(default=None, max_length=50)
@@ -61,16 +69,31 @@ async def validation_error_handler(_request, error: RequestValidationError):
     return JSONResponse(status_code=422, content={"detail": details})
 
 
-class Message(BaseModel):
-    name: str
-    role: str
-    text: str
+class Message(ConversationMessage):
     time: str
 
 
 class RunResponse(BaseModel):
     prompt: str
     messages: list[Message]
+
+
+def _conversation_context(history: list[ConversationMessage], name: str, role: str) -> str:
+    """Keep the transcript in user context, not in the initial system prompt."""
+    if not history:
+        return ""
+
+    transcript = json.dumps(
+        [message.model_dump() for message in history], ensure_ascii=False
+    )
+    return (
+        "Conversation so far, oldest to newest (JSON):\n"
+        f"{transcript}\n\n"
+        f"Continue the conversation as {name} ({role}). "
+        "Take the whole conversation and any human feedback into account, "
+        "and respond to the latest message. Write only your next reply, "
+        "not a replay of the transcript."
+    )
 
 
 def _generate_events(request: RunRequest):
@@ -87,7 +110,9 @@ def _generate_events(request: RunRequest):
             api_key=request.model_b_api_key.get_secret_value(),
         ),
     ]
-    previous_message = ""
+    # Every request carries its own history, so separate users do not share
+    # conversation state and a continuation can survive a server restart.
+    history = list(request.history)
 
     for turn in range(request.turns):
         # if turn > 0:
@@ -95,15 +120,18 @@ def _generate_events(request: RunRequest):
 
         agent = agents[turn % len(agents)]
         yield {"type": "responding", "name": agent.name, "turn": turn + 1}
-        response = agent.respond(request.prompt, previous_message)
+        context = _conversation_context(history, agent.name, agent.role)
+        response = agent.respond(request.prompt, context)
         message = Message(
             name=agent.name,
             role=agent.role,
             text=response,
             time=datetime.now(timezone.utc).isoformat(),
         )
+        history.append(ConversationMessage(
+            name=message.name, role=message.role, text=message.text
+        ))
         yield message
-        previous_message = response
 
 
 def _generate_messages(request: RunRequest):
