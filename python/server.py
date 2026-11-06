@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, SecretStr, field_validator
 from starlette.responses import JSONResponse, StreamingResponse
 
-from agents import DEFAULT_MODEL, AgentA, AgentB, ModelName
+from agents import DEFAULT_MODE, DEFAULT_MODEL, AgentA, AgentB, ModelName, RunMode
 
 
 app = FastAPI(title="Two-Agent Prototype")
@@ -42,6 +42,7 @@ class ConversationMessage(BaseModel):
 class RunRequest(BaseModel):
     prompt: str = Field(min_length=1)
     turns: int = Field(default=6, ge=1, le=20)
+    mode: RunMode | None = DEFAULT_MODE
     history: list[ConversationMessage] = Field(default_factory=list)
     model_a_name: str | None = Field(default=None, max_length=50)
     model_b_name: str | None = Field(default=None, max_length=50)
@@ -103,11 +104,13 @@ def _generate_events(request: RunRequest):
             request.model_a_name, request.model_a_role,
             model=request.model_a_model,
             api_key=request.model_a_api_key.get_secret_value(),
+            mode=request.mode,
         ),
         AgentB(
             request.model_b_name, request.model_b_role,
             model=request.model_b_model,
             api_key=request.model_b_api_key.get_secret_value(),
+            mode=request.mode,
         ),
     ]
     # Every request carries its own history, so separate users do not share
