@@ -166,6 +166,7 @@ function runBrowser() {
     };
     get('initial-prompt').value = 'Plan a garden.';
     get('turn-limit').value = '3';
+    get('run-mode').value = '';
     get('model-a-name').value = 'Gardener';
     get('model-b-name').value = 'Reviewer';
     get('model-a-role').value = 'Planner';
@@ -182,6 +183,7 @@ function runBrowser() {
 
 test('follow-ups retain history/settings, stream another full round, and append to one chat', async () => {
     const app = runBrowser();
+    app.get('run-mode').value = 'Debate';
     assert.equal(app.get('send-message').disabled, true);
     await app.start();
     assert.equal(app.get('send-message').disabled, false);
@@ -193,11 +195,15 @@ test('follow-ups retain history/settings, stream another full round, and append 
         app.get('turn-limit').value = '1';
         app.get('initial-prompt').value = 'Something unrelated';
         app.get('model-a-name').value = 'Changed name';
+        app.get('run-mode').value = 'Brainstorm';
         await app.send(feedback);
         const request = app.requests.at(-1);
         assert.equal(request.turns, 3);
         assert.equal(request.prompt, 'Plan a garden.');
         assert.equal(request.model_a_name, 'Gardener');
+        assert.equal(request.mode, 'Debate');
+        assert.equal(app.get('run-mode-display').textContent, 'Debate');
+        assert.equal(app.get('review-mode').textContent, 'Debate');
         assert.equal(request.history.length, previous + 1);
         assert.equal(request.history.at(-1).text, feedback);
         assert.equal(app.state().messages.length, previous + 4);
@@ -211,6 +217,44 @@ test('follow-ups retain history/settings, stream another full round, and append 
     assert.ok(!JSON.stringify(app.saved).includes('dummy-'));
     assert.ok(!JSON.stringify(app.state()).includes('dummy-'));
     assert.equal(app.alerts.length, 0);
+});
+
+test('each selected mode is sent, displayed, saved, and exported', async () => {
+    const app = runBrowser();
+    let exported;
+    app.context.URL = {
+        createObjectURL: blob => { exported = blob; return 'blob:offline-test'; },
+        revokeObjectURL() {}
+    };
+    const modeOptions = html.match(/<select id="run-mode">([\s\S]*?)<\/select>/)[1];
+    const modes = [...modeOptions.matchAll(/<option value="([^"]*)"/g)].map(option => option[1]);
+    assert.deepEqual(modes, ['', 'Cooperative Task', 'Debate', 'Brainstorm']);
+    assert.match(modeOptions, /<option value="" selected>None<\/option>/);
+    for (const mode of modes) {
+        app.get('run-mode').value = mode;
+        await app.start();
+        assert.equal(app.requests.at(-1).mode, mode || null);
+        assert.equal(app.get('run-mode-display').textContent, mode || 'None');
+        assert.equal(app.get('review-mode').textContent, mode || 'None');
+        assert.equal(app.chats.at(-1).data.mode, mode || null);
+        assert.equal(app.chats.at(-1).data.preview, app.state().messages[0][2]);
+        await app.get('export-json').emit('click');
+        assert.equal(JSON.parse(await exported.text()).mode, mode || null);
+    }
+    assert.equal(app.alerts.length, 0);
+});
+
+test('the default None mode is retained across follow-up rounds', async () => {
+    const app = runBrowser();
+    await app.start();
+    assert.equal(app.requests[0].mode, null);
+    assert.equal(app.get('run-mode-display').textContent, 'None');
+    app.get('run-mode').value = 'Debate';
+    await app.send('Continue without adding a mode.');
+    assert.equal(app.requests.at(-1).mode, null);
+    assert.equal(app.state().currentRun.mode, null);
+    assert.equal(app.get('run-mode-display').textContent, 'None');
+    assert.equal(app.get('review-mode').textContent, 'None');
 });
 
 test('six-turn continuations count from 6/12 through 12/12, then 12/18 through 18/18', async () => {
@@ -291,10 +335,12 @@ test('a new run resets the transcript and continuation settings', async () => {
     await app.send('Continue.');
     app.get('turn-limit').value = '1';
     app.get('initial-prompt').value = 'Start a different topic.';
+    app.get('run-mode').value = 'Brainstorm';
     await app.start();
     assert.equal(app.requests.at(-1).history.length, 0);
     assert.equal(app.state().messages.length, 1);
     assert.equal(app.state().currentRun.turns, 1);
+    assert.equal(app.state().currentRun.mode, 'Brainstorm');
     assert.equal(app.state().completedTurns, 1);
     assert.equal(app.get('turn-count').textContent, '1 / 1');
     assert.equal(app.chats.length, 2);

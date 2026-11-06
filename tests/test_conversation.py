@@ -75,11 +75,96 @@ class ConversationTests(unittest.TestCase):
         history = [{"name": "Human", "role": "Moderator", "text": "Focus on cost."}]
         with patch("agents.get_response", return_value="A cheaper plan.") as respond:
             response = self.client.post("/api/run", json={
-                **self.payload, "turns": 1, "history": history
+                **self.payload, "turns": 1, "history": history, "mode": "Debate"
             })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()["messages"]), 1)
         self.assertEqual(self.context_messages(respond.call_args), history)
+        self.assertEqual(respond.call_args.args[5], "Debate")
+
+    def test_missing_mode_defaults_to_none(self):
+        _, calls = self.stream(self.payload)
+        for call in calls.call_args_list:
+            self.assertIsNone(call.args[5])
+        self.assertIsNone(agents.DEFAULT_MODE)
+        self.assertIsNone(agents.AgentA().mode)
+        self.assertIsNone(agents.AgentB().mode)
+
+    def test_no_mode_preserves_the_exact_original_system_prompt(self):
+        graph = SimpleNamespace(ainvoke=AsyncMock(return_value={
+            "messages": [SimpleNamespace(content="A response without a mode.")]
+        }))
+        for mode_fields in ({}, {"mode": None}):
+            with self.subTest(mode_fields=mode_fields):
+                with patch("agents.init_chat_model"), patch(
+                    "agents.create_agent", return_value=graph
+                ) as create:
+                    response = self.client.post("/api/run/stream", json={
+                        **self.payload, "turns": 2, **mode_fields
+                    })
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(create.call_count, 2)
+                for role, call in zip(("Planner", "Critic"), create.call_args_list):
+                    self.assertEqual(call.kwargs["system_prompt"],
+                        self.payload["prompt"] +
+                        f"\n\nYou are (the) {role} in a conversation. "
+                        "Use only a maximum of 100 words for each response."
+                    )
+
+    def test_selected_mode_reaches_both_agents_and_follow_ups(self):
+        for mode in agents.MODE_INSTRUCTIONS:
+            with self.subTest(mode=mode):
+                events, calls = self.stream({**self.payload, "mode": mode})
+                history = [
+                    {field: event[field] for field in ("name", "role", "text")}
+                    for event in events[1::2]
+                ]
+                history.append({"name": "Human", "role": "Moderator", "text": "Continue."})
+                _, follow_up_calls = self.stream({
+                    **self.payload, "mode": mode, "history": history
+                })
+                for index, call in enumerate(calls.call_args_list):
+                    self.assertEqual(call.args[5], mode)
+                    self.assertEqual(call.args[2], "Planner" if index % 2 == 0 else "Critic")
+                for call in follow_up_calls.call_args_list:
+                    self.assertEqual(call.args[5], mode)
+                    self.assertEqual(self.context_messages(call)[:len(history)], history)
+
+    def test_each_mode_is_in_both_agents_system_prompts(self):
+        graph = SimpleNamespace(ainvoke=AsyncMock(return_value={
+            "messages": [SimpleNamespace(content="A response for this mode.")]
+        }))
+        for mode, instructions in agents.MODE_INSTRUCTIONS.items():
+            with self.subTest(mode=mode):
+                with patch("agents.init_chat_model"), patch(
+                    "agents.create_agent", return_value=graph
+                ) as create:
+                    response = self.client.post("/api/run/stream", json={
+                        **self.payload, "turns": 2, "mode": mode
+                    })
+                events = [json.loads(line) for line in response.text.splitlines()]
+                self.assertEqual(len(events), 4)
+                self.assertEqual(create.call_count, 2)
+                for role, call in zip(("Planner", "Critic"), create.call_args_list):
+                    system_prompt = call.kwargs["system_prompt"]
+                    self.assertTrue(system_prompt.startswith(self.payload["prompt"]))
+                    self.assertIn(role, system_prompt)
+                    self.assertIn("100 words", system_prompt)
+                    self.assertIn(f"Conversation mode: {mode}.", system_prompt)
+                    self.assertIn(instructions, system_prompt)
+                    self.assertNotIn("test-key", system_prompt)
+
+    def test_invalid_modes_are_rejected_without_exposing_keys(self):
+        for mode in ("Unsupported mode", "", 7):
+            with self.subTest(mode=mode):
+                with patch("agents.get_response") as respond:
+                    response = self.client.post("/api/run/stream", json={
+                        **self.payload, "mode": mode
+                    })
+                self.assertEqual(response.status_code, 422)
+                respond.assert_not_called()
+                self.assertNotIn("test-key", response.text)
+                self.assertNotIn("input", response.text)
 
     def test_history_is_isolated_between_requests(self):
         self.stream({**self.payload, "history": [

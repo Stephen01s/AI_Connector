@@ -31,6 +31,28 @@ ModelName = Literal[
 ]
 DEFAULT_MODEL: ModelName = "google_genai:gemini-3.5-flash-lite"
 
+RunMode = Literal["Cooperative Task", "Debate", "Brainstorm"]
+DEFAULT_MODE: RunMode | None = None
+MODE_INSTRUCTIONS: dict[RunMode, str] = {
+    "Cooperative Task": (
+        "Work together toward the initial prompt's shared goal. Build on the "
+        "other agent's contributions, offer constructive improvements, and "
+        "help develop a useful joint solution while keeping your assigned role."
+    ),
+    "Debate": (
+        "Explore opposing viewpoints and respectfully challenge the other "
+        "agent's claims. Give reasons and relevant evidence, address "
+        "counterarguments, and avoid agreeing without examining the argument "
+        "while keeping your assigned role."
+    ),
+    "Brainstorm": (
+        "Generate varied, creative ideas related to the initial prompt. "
+        "Build on and combine the other agent's suggestions, explore new "
+        "possibilities, and prioritize idea generation over settling on one "
+        "answer too early while keeping your assigned role."
+    ),
+}
+
 
 def _get_text_response(result: dict) -> str:
     """Extract text from the final LangChain agent message."""
@@ -54,17 +76,22 @@ def _build_agent(
     role: str,
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
+    mode: RunMode | None = DEFAULT_MODE,
 ):
     """Build a model with this request's key, without changing shared keys."""
     role_instructions = (
         f"\n\nYou are (the) {role} in a conversation. Use only a maximum of 100 words for each response."
+    )
+    mode_instructions = (
+        f"\n\nConversation mode: {mode}.\n{MODE_INSTRUCTIONS[mode]}"
+        if mode is not None else ""
     )
 
     return create_agent(
         model=init_chat_model(model, **({"api_key": api_key} if api_key else {})),
         tools=[],
         checkpointer=InMemorySaver(),
-        system_prompt=system_prompt + role_instructions,
+        system_prompt=system_prompt + role_instructions + mode_instructions,
     )
 
 
@@ -74,9 +101,10 @@ async def _get_response(
     role: str,
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
+    mode: RunMode | None = DEFAULT_MODE,
 ) -> str:
     """Generate one response using the selected model and request's key."""
-    agent = _build_agent(system_prompt, role, model, api_key)
+    agent = _build_agent(system_prompt, role, model, api_key, mode)
     user_message = previous_message or "Begin the conversation using your instructions."
     result = await agent.ainvoke(
         {"messages": [{"role": "user", "content": user_message}]},
@@ -91,10 +119,11 @@ def get_response(
     role: str,
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
+    mode: RunMode | None = DEFAULT_MODE,
 ) -> str:
     """Synchronous wrapper used by the FastAPI endpoint."""
     return asyncio.run(
-        _get_response(system_prompt, previous_message, role, model, api_key)
+        _get_response(system_prompt, previous_message, role, model, api_key, mode)
     )
 
 
@@ -108,6 +137,7 @@ class AgentA:
         role: str | None = None,
         model: str = DEFAULT_MODEL,
         api_key: str | None = None,
+        mode: RunMode | None = DEFAULT_MODE,
     ):
         self.name = display_name.strip() if display_name else self.default_name
         if not self.name:
@@ -117,9 +147,12 @@ class AgentA:
             self.role = self.default_role
         self.model = model
         self._api_key = api_key
+        self.mode = mode
 
     def respond(self, prompt: str, previous_message: str) -> str:
-        return get_response(prompt, previous_message, self.role, self.model, self._api_key)
+        return get_response(
+            prompt, previous_message, self.role, self.model, self._api_key, self.mode
+        )
 
 
 class AgentB:
@@ -132,6 +165,7 @@ class AgentB:
         role: str | None = None,
         model: str = DEFAULT_MODEL,
         api_key: str | None = None,
+        mode: RunMode | None = DEFAULT_MODE,
     ):
         self.name = display_name.strip() if display_name else self.default_name
         if not self.name:
@@ -141,6 +175,9 @@ class AgentB:
             self.role = self.default_role
         self.model = model
         self._api_key = api_key
+        self.mode = mode
 
     def respond(self, prompt: str, previous_message: str) -> str:
-        return get_response(prompt, previous_message, self.role, self.model, self._api_key)
+        return get_response(
+            prompt, previous_message, self.role, self.model, self._api_key, self.mode
+        )

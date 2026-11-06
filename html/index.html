@@ -100,10 +100,11 @@
                 </label>
                 <button class="light full api-key-button" id="clear-api-keys" type="button">Clear saved API keys</button>
                 <label>Mode (optional)
-                  <select>
-                    <option>Cooperative Task</option>
-                    <option>Debate</option>
-                    <option>Brainstorm</option>
+                  <select id="run-mode">
+                    <option value="" selected>None</option>
+                    <option value="Cooperative Task">Cooperative Task</option>
+                    <option value="Debate">Debate</option>
+                    <option value="Brainstorm">Brainstorm</option>
                   </select>
                 </label>
                 <label>Initial Prompt
@@ -142,7 +143,7 @@
             <h2>Run Details</h2>
             <dl>
               <dt>Mode</dt>
-              <dd>Cooperative Task</dd>
+              <dd id="run-mode-display">None</dd>
               <dt>Turn Count</dt>
               <dd id="turn-count">0 / 6</dd>
               <dt>Status</dt>
@@ -165,7 +166,7 @@
         <div class="page-heading review-heading">
           <h1>Run Review</h1>
           <div class="run-meta">
-            <span>Mode: <b>Cooperative Task</b></span>
+            <span>Mode: <b id="review-mode">None</b></span>
             <span>Turns: <b>6</b></span>
             <span>Date: <b>Apr 26, 2025, 10:24 AM</b></span>
           </div>
@@ -220,7 +221,7 @@
   <script defer src="../javascript/theme.js" ></script>
   <script defer src="../javascript/role-controls.js?v=1"></script>
   <script defer src="../javascript/api-keys.js?v=conversation-follow-ups-1"></script>
-  <script type="module" src="../javascript/script.js?v=cumulative-turns-1"></script>
+  <script type="module" src="../javascript/script.js?v=run-mode-2"></script>
 </body>
 
 </html>

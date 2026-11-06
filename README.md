@@ -8,7 +8,8 @@ Joanna, Austin, Stephen, Hayden
 
 This prototype includes a small Python API that runs a feedback loop between
 two agents using Gemini, OpenAI, or Anthropic. The initial prompt entered on
-the website is used as the system prompt for both agents.
+the website is used as the system prompt for both agents, with their
+selected roles and, if chosen, the run's mode appended as instructions.
 
 ## Run it
 
@@ -109,12 +110,34 @@ Never hard-code real keys in source files or commit .env. The optional local
 .env remains supported for direct Python-agent development, but website runs
 require keys supplied through the dialog rather than using a shared server key.
 
+## Conversation modes
+
+The Mode dropdown applies to both agents:
+
+- None (default): add no mode instructions; use the original initial prompt
+  and role instructions only.
+- Cooperative Task: work toward a shared solution and constructively build
+  on each other's contributions.
+- Debate: explore opposing viewpoints, challenge claims respectfully, and
+  address counterarguments with reasons and relevant evidence.
+- Brainstorm: generate varied ideas and build on suggestions before settling
+  on a final answer.
+
+Each agent's system prompt combines the initial prompt, its assigned role,
+and instructions for the selected mode, if any. When a request omits the
+mode or sends null, no mode instructions are added. Follow-up rounds retain the
+original mode. Run Details, saved-run metadata, and JSON exports also use
+the selected mode.
+
+Deploy both the updated frontend and Python backend to enable modes on the
+hosted site.
+
 ## Continue a conversation
 
 After a round finishes, enter a follow-up in the conversation's message box
 and click Send (or press Enter). Your message stays in the transcript, and
 the agents run another round using the original models, roles, display
-names, initial prompt, and turn limit.
+names, mode, initial prompt, and turn limit.
 
 For example, a turn limit of 6 produces 6 more AI replies for each follow-up,
 alternating between Model A and Model B. The turn counter is cumulative:

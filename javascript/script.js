@@ -101,6 +101,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     if (isRunning) return;
     const prompt = document.querySelector('#initial-prompt').value.trim();
     const turns = Number(document.querySelector('#turn-limit').value);
+    const mode = document.querySelector('#run-mode').value || null;
     const modelAName = document.querySelector('#model-a-name').value.trim();
     const modelBName = document.querySelector('#model-b-name').value.trim();
     const modelARole = getRoleValue('#model-a-role');
@@ -128,6 +129,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         currentRun = {
             prompt,
             turns,
+            mode,
             model_a_name: modelAName,
             model_b_name: modelBName,
             model_a_role: modelARole,
@@ -144,6 +146,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         renderMessages(document.querySelector('#messages'));
         renderMessages(document.querySelector('#review-messages'));
         document.querySelector('#run-prompt').textContent = prompt;
+        document.querySelector('#run-mode-display').textContent = mode || 'None';
+        document.querySelector('#review-mode').textContent = mode || 'None';
         document.querySelector('#turn-status').textContent = 'Run in progress...';
         document.querySelector('#turn-count').textContent = '0 / ' + turns;
         setRespondingModel();
@@ -259,7 +263,8 @@ async function saveRun() {
                 userId: profileId,
                 username,
                 title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
-                preview: runMessages[0]?.text?.slice(0, 120) || '',
+                preview: messages[0]?.[2]?.slice(0, 120) || '',
+                mode: currentRun.mode,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -321,7 +326,7 @@ document.querySelector('#save-local').addEventListener('click', () =>
 
 document.querySelector('#export-json').addEventListener('click', () => {
     const blob = new Blob([
-        JSON.stringify({ mode: 'Cooperative Task', messages }, null, 2)
+        JSON.stringify({ mode: currentRun?.mode ?? null, messages }, null, 2)
     ], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
