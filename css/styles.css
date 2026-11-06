@@ -185,13 +185,52 @@ button {
   margin-top: 3px;
 }
 
+
+/* Prompt Ideas */
+
 .prompt-ideas {
-  min-height: 230px;
+    min-height: 230px;
 }
 
 .ideas-content {
-  min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
 }
+
+.prompt-idea {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 4px;
+    border: none;
+    border-bottom: 1px solid #dce1e8;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.prompt-idea:first-child {
+    border-top: 1px solid #dce1e8;
+}
+
+.prompt-idea:hover {
+    background: rgba(83, 102, 135, 0.06);
+}
+
+.prompt-idea-arrow {
+    flex-shrink: 0;
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 400;
+}
+
 
 /* Conversation and review layout */
 .conversation-layout,

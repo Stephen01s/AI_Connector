@@ -67,23 +67,67 @@ renderMessages(document.querySelector('#messages'));
 renderMessages(document.querySelector('#review-messages'));
 setRunBusy(false);
 
-document.querySelector('#random-prompt').addEventListener('click', async () => {
-    const promptInput = document.querySelector('#initial-prompt');
+async function loadPrompts() {
+    if (prompts.length) return prompts;
+    const response = await fetch('../json/prompts.json');
+    if (!response.ok) {
+        throw new Error('Could not load prompts');
+    }
+    const data = await response.json();
+    prompts = data.prompts;
+    return prompts;
+}
 
+async function renderPromptIdeas() {
+    const container = document.querySelector('.ideas-content');
     try {
-        if (!prompts.length) {
-            const response = await fetch('../json/prompts.json');
-            if (!response.ok) throw new Error('Could not load prompts');
-            ({ prompts } = await response.json());
-        }
+        const allPrompts = await loadPrompts();
+        const shuffled = [...allPrompts].sort(() => Math.random() - 0.5);
+        const selectedPrompts = shuffled.slice(0, 4);
+        container.replaceChildren();
+        selectedPrompts.forEach(prompt => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'prompt-idea';
 
-        promptInput.value = prompts[Math.floor(Math.random() * prompts.length)];
-        promptInput.focus();
+            const text = document.createElement('span');
+            text.textContent = prompt;
+
+            const arrow = document.createElement('span');
+            arrow.className = 'prompt-idea-arrow';
+            arrow.textContent = '›';
+            arrow.setAttribute('aria-hidden', 'true');
+
+            button.append(text, arrow);
+
+            button.addEventListener('click', () => {
+                const input = document.querySelector('#initial-prompt');
+                input.value = prompt;
+                input.focus();
+            });
+            container.appendChild(button);
+        });
+    } catch (error) {
+        container.textContent = 'Could not load prompt ideas.';
+        console.error(error);
+    }
+}
+
+document.querySelector('#random-prompt').addEventListener('click', async () => {
+    try {
+        const allPrompts = await loadPrompts();
+        const randomIndex = Math.floor(Math.random() * allPrompts.length)
+
+        const input = document.querySelector('#initial-prompt');
+        input.value = allPrompts[randomIndex];
+        input.focus();
     } catch (error) {
         alert('Could not load a random prompt.');
         console.error(error);
     }
 });
+
+renderPromptIdeas();
 
 document.querySelectorAll('[data-nav]').forEach(button =>
     button.addEventListener('click', () => {
