@@ -6,23 +6,7 @@ import './account.js';
 
 const { getRoleValue, updateModelCards } = window.roleControls;
 const API_URL = 'https://ai-connector-szkl.onrender.com';
-const themeToggle = document.querySelector('#theme-toggle');
-const savedTheme = localStorage.getItem('jash-theme');
-if (savedTheme === 'dark') document.body.classList.add('dark-mode');
-if (themeToggle) {
-    const updateThemeToggle = () => {
-        const darkMode = document.body.classList.contains('dark-mode');
-        themeToggle.textContent = darkMode ? '☀' : '☾';
-        themeToggle.setAttribute('aria-label', darkMode ? 'Disable dark mode' : 'Enable dark mode');
-        themeToggle.setAttribute('aria-pressed', String(darkMode));
-    };
-    updateThemeToggle();
-    themeToggle.addEventListener('click', () => {
-        const darkMode = document.body.classList.toggle('dark-mode');
-        localStorage.setItem('jash-theme', darkMode ? 'dark' : 'light');
-        updateThemeToggle();
-    });
-}
+
 let messages = [];
 let activeChatId = null;
 let prompts = [];
