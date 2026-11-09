@@ -209,7 +209,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 });
 
 async function runConversationRound([modelA, modelB]) {
-    const {turns} = currentRun;
+    const { turns } = currentRun;
     // Each follow-up adds another round to the conversation's AI turn count.
     const targetTurns = completedTurns + turns;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
@@ -222,7 +222,7 @@ async function runConversationRound([modelA, modelB]) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...currentRun,
-                history: messages.map(([name, role, text]) => ({name, role, text})),
+                history: messages.map(([name, role, text]) => ({ name, role, text })),
                 model_a_api_key: modelA.apiKey,
                 model_b_api_key: modelB.apiKey
             })
@@ -302,16 +302,13 @@ async function saveRun() {
             const profile = await getDoc(doc(db, 'users', profileId));
             if (!profile.exists()) return;
             const username = profile.data().username || profileId;
-            const {prompt} = currentRun;
+            const { prompt } = currentRun;
             const chat = await addDoc(collection(db, 'chats'), {
                 userId: profileId,
                 username,
                 title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
                 preview: messages[0]?.[2]?.slice(0, 120) || '',
-<<<<<<< Updated upstream
                 mode: currentRun.mode,
-=======
->>>>>>> Stashed changes
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -329,7 +326,7 @@ async function saveRun() {
                 timestamp: new Date(time)
             });
         }
-        batch.update(doc(db, 'chats', activeChatId), {updatedAt: serverTimestamp()});
+        batch.update(doc(db, 'chats', activeChatId), { updatedAt: serverTimestamp() });
         await batch.commit();
         savedMessageCount = messages.length;
         document.querySelector('#turn-status').textContent += ' · Saved to your runs';
