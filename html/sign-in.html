@@ -31,14 +31,25 @@
         <h1 id="auth-title">Welcome back</h1>
         <p class="auth-description">Sign in to continue to your collaborative runs.</p>
         <button class="primary auth-submit" id="google-sign-in" type="button">Continue with Google</button>
-        <p class="auth-divider">or continue with a Jash username</p>
-        <form id="sign-in-form">
-          <label for="username">Username</label>
-          <input id="username" name="username" autocomplete="username" required placeholder="Enter your username" />
-          <button class="primary auth-submit" id="submit-sign-in" type="submit">Continue</button>
+        <p class="auth-divider">or use email and password</p>
+        <form id="email-form">
+          <label for="auth-email">Email
+            <input id="auth-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          </label>
+          <label for="auth-password">Password
+            <input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters" />
+          </label>
+          <label id="new-username-label" for="new-username" hidden>Username for a new account
+            <input id="new-username" name="username" autocomplete="username" maxlength="50" />
+          </label>
+          <button class="primary auth-submit" id="submit-email-auth" type="submit">Sign In</button>
         </form>
+        <div class="auth-secondary-actions">
+          <button type="button" id="toggle-auth-mode">Create an account</button>
+          <button type="button" id="reset-password">Forgot password?</button>
+        </div>
         <p id="sign-in-status" class="auth-status" role="status" aria-live="polite"></p>
-        <p class="auth-footnote">Use a username with an existing Jash profile.</p>
+        <p class="auth-footnote">For a legacy account, use the email address linked to your existing profile. New accounts must verify their email before accessing saved runs.</p>
       </section>
     </main>
   </div>

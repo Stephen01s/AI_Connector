@@ -308,7 +308,10 @@ async function saveRun() {
                 username,
                 title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
                 preview: messages[0]?.[2]?.slice(0, 120) || '',
+<<<<<<< Updated upstream
                 mode: currentRun.mode,
+=======
+>>>>>>> Stashed changes
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });

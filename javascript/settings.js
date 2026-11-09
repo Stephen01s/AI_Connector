@@ -1,5 +1,5 @@
 import {
-    collection, doc, getDoc, getDocs, limit, query, serverTimestamp, updateDoc, where
+    doc, getDoc, serverTimestamp, updateDoc
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 
@@ -64,20 +64,6 @@ form.addEventListener('submit', async event => {
     saveButton.disabled = true;
     status.textContent = 'Saving changes…';
     try {
-        const matches = await getDocs(query(
-            collection(db, 'users'),
-            where('username', '==', nextUsername),
-            limit(2)
-        ));
-        const usernameKeyProfile = await getDoc(doc(db, 'users', nextUsername));
-        const duplicate = matches.docs.some(match => match.id !== sessionUserKey) ||
-            (usernameKeyProfile.exists() && usernameKeyProfile.id !== sessionUserKey);
-        if (duplicate) {
-            status.textContent = 'That username is already in use.';
-            fields.username.focus();
-            return;
-        }
-
         await updateDoc(doc(db, 'users', sessionUserKey), {
             username: nextUsername,
             description: fields.description.value.trim(),

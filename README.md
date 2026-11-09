@@ -84,6 +84,20 @@ The frontend continues to call the FastAPI backend on Render using `API_URL`
 in `javascript/script.js`. Netlify's static deployment does not start the
 Python server.
 
+## Firebase sign-in and legacy profiles
+
+In Firebase Console, enable Email/Password under Authentication → Sign-in
+method. Email/password accounts must verify their email before they can access
+Firestore. Publish the rules in `firestore.rules` from Firestore Database →
+Rules.
+
+For a legacy profile, an administrator must add the user's verified email to
+the existing `users` document's `email` field before the user creates an
+email/password account. After verification, the sign-in page matches that
+verified email to the legacy profile. Do not link a profile to an email until
+you have verified that the address belongs to its owner. New accounts without
+a matching legacy profile get a profile document after email verification.
+
 ## API keys for a run
 
 - Selecting a model prompts for its provider's API key if none is saved.

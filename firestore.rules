@@ -2,11 +2,99 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporary compatibility for the current username-only sign-in flow.
-    // Anyone with the app's Firebase config can access all database data
-    // until this date; replace with owner checks after account auth is updated.
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2027, 10, 29);
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profilePath(profileId) {
+      return /databases/$(database)/documents/users/$(profileId);
+    }
+
+    function ownsProfileData(profile) {
+      return signedIn() && (
+        profile.get('uid', '') == request.auth.uid ||
+        profile.get('userID', '') == request.auth.uid ||
+        profile.get('userId', '') == request.auth.uid ||
+        (request.auth.token.get('email_verified', false) == true &&
+          profile.get('email', '') == request.auth.token.get('email', ''))
+      );
+    }
+
+    // A Firebase Auth identity must own the profile. Older profiles are kept,
+    // and can be used after an administrator links their uid or email field.
+    function ownsProfile(profileId) {
+      return signedIn() && (
+        request.auth.uid == profileId ||
+        (exists(profilePath(profileId)) &&
+          ownsProfileData(get(profilePath(profileId)).data))
+      );
+    }
+
+    function ownsChat(chat) {
+      return chat.userId is string && ownsProfile(chat.userId);
+    }
+
+    function ownsChatById(chatId) {
+      let chatPath = /databases/$(database)/documents/chats/$(chatId);
+      return signedIn() && exists(chatPath) && ownsChat(get(chatPath).data);
+    }
+
+    match /users/{profileId} {
+      // Keep username-only profile records, but do not expose them as a way to
+      // authenticate. A legacy record becomes usable when linked to Auth.
+      // Keep list rules based on the queried document itself. This lets a
+      // query constrained by uid/userID/email prove it can return only owned
+      // profiles, without an extra get() during query authorization.
+      allow get: if signedIn() &&
+        (profileId == request.auth.uid || ownsProfileData(resource.data));
+      allow list: if ownsProfileData(resource.data);
+      allow create: if signedIn() && profileId == request.auth.uid &&
+        request.auth.token.email_verified == true &&
+        request.resource.data.keys().hasOnly(['uid', 'email', 'username', 'createdAt']) &&
+        request.resource.data.keys().hasAll(['uid', 'email', 'username', 'createdAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.username is string &&
+        request.resource.data.username.size() > 0 &&
+        request.resource.data.username.size() <= 50 &&
+        request.resource.data.createdAt is timestamp;
+      allow delete: if false;
+      allow update: if ownsProfile(profileId) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['username', 'description', 'updatedAt']);
+    }
+
+    match /chats/{chatId} {
+      // Signed-out visitors can see only chats their owner explicitly shared.
+      allow get, list: if resource.data.isPublic == true || ownsChat(resource.data);
+
+      allow create: if ownsChat(request.resource.data) &&
+        request.resource.data.keys().hasOnly([
+          'userId', 'username', 'title', 'preview', 'createdAt', 'updatedAt', 'isPublic'
+        ]);
+
+      allow update: if ownsChat(resource.data) &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['title', 'preview', 'updatedAt', 'isPublic']);
+
+      allow delete: if ownsChat(resource.data);
+
+      match /messages/{messageId} {
+        function parentIsPublic() {
+          let chatPath = /databases/$(database)/documents/chats/$(chatId);
+          return exists(chatPath) && get(chatPath).data.isPublic == true;
+        }
+
+        allow get, list: if parentIsPublic() || ownsChatById(chatId);
+        allow create: if ownsChatById(chatId) &&
+          request.resource.data.keys().hasOnly(['role', 'agentId', 'content', 'timestamp']) &&
+          request.resource.data.role is string &&
+          request.resource.data.content is string &&
+          request.resource.data.timestamp is timestamp;
+        allow update: if false;
+        allow delete: if ownsChatById(chatId);
+      }
     }
   }
 }

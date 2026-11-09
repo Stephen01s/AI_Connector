@@ -35,7 +35,7 @@ async function loadRuns() {
     const username = profile.data().username || profileId;
     document.querySelector('#runs-description').textContent = `Previous conversations for ${username}.`;
 
-    const runsQuery = query(collection(db, 'chats'), where('username', '==', username));
+    const runsQuery = query(collection(db, 'chats'), where('userId', '==', profileId));
     const snapshot = await getDocs(runsQuery);
     const chats = snapshot.docs.map(chat => ({ id: chat.id, ...chat.data() }));
     chats.sort((a, b) => timestampMillis(b.updatedAt || b.createdAt) - timestampMillis(a.updatedAt || a.createdAt));
