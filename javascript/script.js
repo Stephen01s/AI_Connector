@@ -295,12 +295,19 @@ async function runConversationRound([modelA, modelB]) {
 
 async function saveRun() {
     const profileId = localStorage.getItem(usernameSessionKey);
-    if (!profileId) return null;
+    const status = document.querySelector('#turn-status');
+    if (!profileId) {
+        status.textContent += ' · Sign in to save this run';
+        return null;
+    }
 
     try {
         if (!activeChatId) {
             const profile = await getDoc(doc(db, 'users', profileId));
-            if (!profile.exists()) return;
+            if (!profile.exists()) {
+                status.textContent += ' · Your account profile was not found; sign in again';
+                return null;
+            }
             const username = profile.data().username || profileId;
             const { prompt } = currentRun;
             const chat = await addDoc(collection(db, 'chats'), {
@@ -329,10 +336,10 @@ async function saveRun() {
         batch.update(doc(db, 'chats', activeChatId), { updatedAt: serverTimestamp() });
         await batch.commit();
         savedMessageCount = messages.length;
-        document.querySelector('#turn-status').textContent += ' · Saved to your runs';
+        status.textContent += ' · Saved to your runs';
     } catch (error) {
         console.error('Could not save run to Firestore:', error);
-        document.querySelector('#turn-status').textContent += ' · Could not save to your runs';
+        status.textContent += ' · Could not save to your runs';
         return null;
     }
 }

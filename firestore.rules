@@ -70,7 +70,7 @@ service cloud.firestore {
 
       allow create: if ownsChat(request.resource.data) &&
         request.resource.data.keys().hasOnly([
-          'userId', 'username', 'title', 'preview', 'createdAt', 'updatedAt', 'isPublic'
+          'userId', 'username', 'title', 'preview', 'mode', 'createdAt', 'updatedAt', 'isPublic'
         ]);
 
       allow update: if ownsChat(resource.data) &&
