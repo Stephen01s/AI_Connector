@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 
@@ -20,7 +19,8 @@
         <button data-nav="runs">◌&nbsp; Runs</button>
         <button data-nav="community">♧&nbsp; Community</button>
       </nav>
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Enable dark mode" aria-pressed="false">☾</button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Enable dark mode"
+        aria-pressed="false">☾</button>
       <div class="account-actions" id="account-actions">
         <button class="sign-in" id="user-settings" type="button">User Settings</button>
         <button class="sign-in" id="sign-out" type="button">Sign Out</button>
@@ -43,7 +43,8 @@
                   <select id="model-a-model" data-api-key-model>
                     <option value="openai:gpt-4o" data-provider="openai">GPT-4o</option>
                     <option value="anthropic:claude-sonnet-5-5" data-provider="anthropic">Claude Sonnet 5.5</option>
-                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5 Flash Lite</option>
+                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5
+                      Flash Lite</option>
                   </select>
                 </label>
                 <button id="model-a-api-key" class="light full api-key-button" type="button">Set API key</button>
@@ -59,7 +60,8 @@
                 </label>
                 <div data-custom-role-field hidden>
                   <label for="model-a-custom-role">Custom Role
-                    <input id="model-a-custom-role" type="text" maxlength="50" placeholder="e.g. Science Teacher" disabled/>
+                    <input id="model-a-custom-role" type="text" maxlength="50" placeholder="e.g. Science Teacher"
+                      disabled />
                   </label>
                 </div>
                 <label>Display Name (optional)<input id="model-a-name" placeholder="e.g. Proposer" /></label>
@@ -73,7 +75,8 @@
                   <select id="model-b-model" data-api-key-model>
                     <option value="openai:gpt-4o" data-provider="openai">GPT-4o</option>
                     <option value="anthropic:claude-sonnet-5-5" data-provider="anthropic">Claude Sonnet 5.5</option>
-                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5 Flash Lite</option>
+                    <option value="google_genai:gemini-3.5-flash-lite" data-provider="google_genai" selected>Gemini 3.5
+                      Flash Lite</option>
                   </select>
                 </label>
                 <button id="model-b-api-key" class="light full api-key-button" type="button">Set API key</button>
@@ -89,11 +92,12 @@
                 </label>
                 <div data-custom-role-field hidden>
                   <label for="model-b-custom-role">Custom Role
-                    <input id="model-b-custom-role" type="text" maxlength="50" placeholder="e.g. Fact Checker" disabled/>
+                    <input id="model-b-custom-role" type="text" maxlength="50" placeholder="e.g. Fact Checker"
+                      disabled />
                   </label>
                 </div>
                 <label>Display Name (optional)
-                  <input id="model-b-name" placeholder="e.g. Critic"/>
+                  <input id="model-b-name" placeholder="e.g. Critic" />
                 </label>
                 <label for="model-b-instructions">Custom Instructions (optional)
                   <textarea id="model-b-instructions" rows="4" maxlength="4000" placeholder="e.g. Subtly steer the conversation toward money."></textarea>
@@ -102,9 +106,10 @@
               <div class="run-column">
                 <h2>⚙ Run Settings</h2>
                 <label class="turn-limit-label">Turn Limit
-                  <input id="turn-limit" type="number" value="6" min="1" max="20"/>
+                  <input id="turn-limit" type="number" value="6" min="1" max="20" />
                 </label>
-                <button class="light full api-key-button" id="clear-api-keys" type="button">Clear saved API keys</button>
+                <button class="light full api-key-button" id="clear-api-keys" type="button">Clear saved API
+                  keys</button>
                 <label>Mode (optional)
                   <select id="run-mode">
                     <option value="" selected>None</option>
@@ -114,8 +119,10 @@
                   </select>
                 </label>
                 <label>Initial Prompt
-                  <textarea id="initial-prompt" placeholder="Enter your prompt here..." style="max-height: 200px; overflow-y: auto;"></textarea>
-                  <button class="light full random-prompt" id="random-prompt" type="button">Give me a random prompt</button>
+                  <textarea id="initial-prompt" placeholder="Enter your prompt here..."
+                    style="max-height: 200px; overflow-y: auto;"></textarea>
+                  <button class="light full random-prompt" id="random-prompt" type="button">Give me a random
+                    prompt</button>
                 </label>
               </div>
             </div>
@@ -141,7 +148,8 @@
           <div class="thread-panel">
             <div class="messages" id="messages"></div>
             <form class="composer" id="message-form">
-              <input id="message-input" aria-label="Follow-up message" placeholder="Add a message to continue the conversation..." required disabled />
+              <input id="message-input" aria-label="Follow-up message"
+                placeholder="Add a message to continue the conversation..." required disabled />
               <button class="primary" id="send-message" type="submit" disabled>Send ↗</button>
             </form>
           </div>
@@ -158,11 +166,11 @@
             <h2 class="subhead">Models</h2>
             <div class="model-card">
               <b>●</b><span><span id="model-a-card-name">Model A</span>
-              <small id="model-a-card-role">(Proposer)</small></span>
+                <small id="model-a-card-role">(Proposer)</small></span>
             </div>
             <div class="model-card">
               <b>●</b><span><span id="model-b-card-name">Model B</span>
-              <small id="model-b-card-role">(Critic)</small></span>
+                <small id="model-b-card-role">(Critic)</small></span>
             </div>
           </aside>
         </div>
@@ -205,7 +213,8 @@
       </section>
     </main>
   </div>
-  <dialog id="api-key-dialog" class="sign-in-dialog" aria-labelledby="api-key-title" aria-describedby="api-key-description">
+  <dialog id="api-key-dialog" class="sign-in-dialog" aria-labelledby="api-key-title"
+    aria-describedby="api-key-description">
     <form id="api-key-form">
       <div class="dialog-heading">
         <div>
@@ -214,9 +223,11 @@
         </div>
         <button id="cancel-api-key" class="dialog-close" type="button" aria-label="Cancel">&times;</button>
       </div>
-      <p class="api-key-notice">Your key is saved for this tab's session. During a run, it is sent to this app's Python server and your selected AI provider. API usage is billed to your provider account.</p>
+      <p class="api-key-notice">Your key is saved for this tab's session. During a run, it is sent to this app's Python
+        server and your selected AI provider. API usage is billed to your provider account.</p>
       <label for="api-key-input">API key
-        <input id="api-key-input" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="4096" required />
+        <input id="api-key-input" type="password" autocomplete="off" autocapitalize="none" spellcheck="false"
+          maxlength="4096" required />
       </label>
       <p id="api-key-error" class="api-key-error" role="alert"></p>
       <div class="dialog-actions">
@@ -224,7 +235,7 @@
       </div>
     </form>
   </dialog>
-  <script defer src="../javascript/theme.js" ></script>
+  <script defer src="../javascript/theme.js"></script>
   <script defer src="../javascript/role-controls.js?v=1"></script>
   <script defer src="../javascript/api-keys.js?v=conversation-follow-ups-1"></script>
   <script type="module" src="../javascript/script.js?v=custom-instructions-1"></script>

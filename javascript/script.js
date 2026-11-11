@@ -213,7 +213,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 });
 
 async function runConversationRound([modelA, modelB]) {
-    const {turns} = currentRun;
+    const { turns } = currentRun;
     // Each follow-up adds another round to the conversation's AI turn count.
     const targetTurns = completedTurns + turns;
     document.querySelector('#turn-status').textContent = 'Run in progress...';
@@ -226,7 +226,7 @@ async function runConversationRound([modelA, modelB]) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...currentRun,
-                history: messages.map(([name, role, text]) => ({name, role, text})),
+                history: messages.map(([name, role, text]) => ({ name, role, text })),
                 model_a_api_key: modelA.apiKey,
                 model_b_api_key: modelB.apiKey
             })
@@ -299,14 +299,21 @@ async function runConversationRound([modelA, modelB]) {
 
 async function saveRun() {
     const profileId = localStorage.getItem(usernameSessionKey);
-    if (!profileId) return null;
+    const status = document.querySelector('#turn-status');
+    if (!profileId) {
+        status.textContent += ' · Sign in to save this run';
+        return null;
+    }
 
     try {
         if (!activeChatId) {
             const profile = await getDoc(doc(db, 'users', profileId));
-            if (!profile.exists()) return;
+            if (!profile.exists()) {
+                status.textContent += ' · Your account profile was not found; sign in again';
+                return null;
+            }
             const username = profile.data().username || profileId;
-            const {prompt} = currentRun;
+            const { prompt } = currentRun;
             const chat = await addDoc(collection(db, 'chats'), {
                 userId: profileId,
                 username,
@@ -330,13 +337,13 @@ async function saveRun() {
                 timestamp: new Date(time)
             });
         }
-        batch.update(doc(db, 'chats', activeChatId), {updatedAt: serverTimestamp()});
+        batch.update(doc(db, 'chats', activeChatId), { updatedAt: serverTimestamp() });
         await batch.commit();
         savedMessageCount = messages.length;
-        document.querySelector('#turn-status').textContent += ' · Saved to your runs';
+        status.textContent += ' · Saved to your runs';
     } catch (error) {
         console.error('Could not save run to Firestore:', error);
-        document.querySelector('#turn-status').textContent += ' · Could not save to your runs';
+        status.textContent += ' · Could not save to your runs';
         return null;
     }
 }
