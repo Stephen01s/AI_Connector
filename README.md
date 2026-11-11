@@ -9,7 +9,7 @@ Joanna, Austin, Stephen, Hayden
 This prototype includes a small Python API that runs a feedback loop between
 two agents using Gemini, OpenAI, or Anthropic. The initial prompt entered on
 the website is used as the system prompt for both agents, with their
-selected roles and, if chosen, the run's mode appended as instructions.
+selected roles and any selected mode or per-model custom instructions appended.
 
 ## Run it
 
@@ -124,6 +124,26 @@ Never hard-code real keys in source files or commit .env. The optional local
 .env remains supported for direct Python-agent development, but website runs
 require keys supplied through the dialog rather than using a shared server key.
 
+## Custom instructions for each model
+
+Each model's configuration has an optional Custom Instructions textbox
+(up to 4,000 characters). For example, Model A can be told not to use vowels,
+while Model B can be told to subtly steer the conversation toward money.
+
+These instructions are appended only to that model's system prompt, after
+the initial prompt, role instructions, and any selected mode instructions.
+Blank or whitespace-only inputs add nothing and preserve the existing
+prompt behavior. Follow-up rounds retain the original custom instructions.
+
+The instructions are not inserted into the shared transcript or included
+as configuration in saved chats or JSON exports. The other model is not
+automatically given them, but a model may reveal them through its responses;
+do not treat them as a place to store secrets. Following constraints such as
+avoiding vowels is requested from the model, not enforced by code.
+
+Deploy the updated frontend and Python backend to use these inputs on the
+hosted site.
+
 ## Conversation modes
 
 The Mode dropdown applies to both agents:
@@ -138,10 +158,10 @@ The Mode dropdown applies to both agents:
   on a final answer.
 
 Each agent's system prompt combines the initial prompt, its assigned role,
-and instructions for the selected mode, if any. When a request omits the
-mode or sends null, no mode instructions are added. Follow-up rounds retain the
-original mode. Run Details, saved-run metadata, and JSON exports also use
-the selected mode.
+any selected mode, and its own custom instructions, if provided. When a
+request omits the mode or sends null, no mode instructions are added.
+Follow-up rounds retain the original mode. Run Details, saved-run metadata,
+and JSON exports also use the selected mode.
 
 Deploy both the updated frontend and Python backend to enable modes on the
 hosted site.
@@ -151,7 +171,7 @@ hosted site.
 After a round finishes, enter a follow-up in the conversation's message box
 and click Send (or press Enter). Your message stays in the transcript, and
 the agents run another round using the original models, roles, display
-names, mode, initial prompt, and turn limit.
+names, custom instructions, mode, initial prompt, and turn limit.
 
 For example, a turn limit of 6 produces 6 more AI replies for each follow-up,
 alternating between Model A and Model B. The turn counter is cumulative:

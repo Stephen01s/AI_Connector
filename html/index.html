@@ -63,6 +63,9 @@
                   </label>
                 </div>
                 <label>Display Name (optional)<input id="model-a-name" placeholder="e.g. Proposer" /></label>
+                <label for="model-a-instructions">Custom Instructions (optional)
+                  <textarea id="model-a-instructions" rows="4" maxlength="4000" placeholder="e.g. Do not use any vowels in your responses."></textarea>
+                </label>
               </div>
               <div class="model-column">
                 <h2>◉ Model B</h2>
@@ -91,6 +94,9 @@
                 </div>
                 <label>Display Name (optional)
                   <input id="model-b-name" placeholder="e.g. Critic"/>
+                </label>
+                <label for="model-b-instructions">Custom Instructions (optional)
+                  <textarea id="model-b-instructions" rows="4" maxlength="4000" placeholder="e.g. Subtly steer the conversation toward money."></textarea>
                 </label>
               </div>
               <div class="run-column">
@@ -221,7 +227,7 @@
   <script defer src="../javascript/theme.js" ></script>
   <script defer src="../javascript/role-controls.js?v=1"></script>
   <script defer src="../javascript/api-keys.js?v=conversation-follow-ups-1"></script>
-  <script type="module" src="../javascript/script.js?v=run-mode-2"></script>
+  <script type="module" src="../javascript/script.js?v=custom-instructions-1"></script>
 </body>
 
 </html>

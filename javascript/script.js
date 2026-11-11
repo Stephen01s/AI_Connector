@@ -150,6 +150,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
     const modelBName = document.querySelector('#model-b-name').value.trim();
     const modelARole = getRoleValue('#model-a-role');
     const modelBRole = getRoleValue('#model-b-role');
+    const modelAInstructions = document.querySelector('#model-a-instructions').value.trim();
+    const modelBInstructions = document.querySelector('#model-b-instructions').value.trim();
 
     if (!prompt) {
         alert('Please enter an initial prompt first.');
@@ -178,6 +180,8 @@ document.querySelector('#start-run').addEventListener('click', async () => {
             model_b_name: modelBName,
             model_a_role: modelARole,
             model_b_role: modelBRole,
+            model_a_instructions: modelAInstructions,
+            model_b_instructions: modelBInstructions,
             model_a_model: modelA.model,
             model_b_model: modelB.model
         };

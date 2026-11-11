@@ -2,6 +2,9 @@
 """
 TODO: Add a third agent that summarizes the chat and determines 
       if it was close to the original prompt or not
+TODO: create a third agent that gets context from the first 
+      two and psychoanalize their conversation/observe to glean 
+      something about the nature of the agents
 """
 import asyncio
 import os
@@ -70,13 +73,13 @@ def _get_text_response(result: dict) -> str:
 
     return str(content)
 
-
 def _build_agent(
     system_prompt: str,
     role: str,
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
     mode: RunMode | None = DEFAULT_MODE,
+    custom_instructions: str = "",
 ):
     """Build a model with this request's key, without changing shared keys."""
     role_instructions = (
@@ -86,12 +89,17 @@ def _build_agent(
         f"\n\nConversation mode: {mode}.\n{MODE_INSTRUCTIONS[mode]}"
         if mode is not None else ""
     )
+    custom_instructions = custom_instructions.strip()
+    custom_prompt = (
+        f"\n\nCustom instructions for this model:\n{custom_instructions}"
+        if custom_instructions else ""
+    )
 
     return create_agent(
         model=init_chat_model(model, **({"api_key": api_key} if api_key else {})),
         tools=[],
         checkpointer=InMemorySaver(),
-        system_prompt=system_prompt + role_instructions + mode_instructions,
+        system_prompt=system_prompt + role_instructions + mode_instructions + custom_prompt,
     )
 
 
@@ -102,9 +110,10 @@ async def _get_response(
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
     mode: RunMode | None = DEFAULT_MODE,
+    custom_instructions: str = "",
 ) -> str:
     """Generate one response using the selected model and request's key."""
-    agent = _build_agent(system_prompt, role, model, api_key, mode)
+    agent = _build_agent(system_prompt, role, model, api_key, mode, custom_instructions)
     user_message = previous_message or "Begin the conversation using your instructions."
     result = await agent.ainvoke(
         {"messages": [{"role": "user", "content": user_message}]},
@@ -120,10 +129,13 @@ def get_response(
     model: str = DEFAULT_MODEL,
     api_key: str | None = None,
     mode: RunMode | None = DEFAULT_MODE,
+    custom_instructions: str = "",
 ) -> str:
     """Synchronous wrapper used by the FastAPI endpoint."""
     return asyncio.run(
-        _get_response(system_prompt, previous_message, role, model, api_key, mode)
+        _get_response(
+            system_prompt, previous_message, role, model, api_key, mode, custom_instructions
+        )
     )
 
 
@@ -138,6 +150,7 @@ class AgentA:
         model: str = DEFAULT_MODEL,
         api_key: str | None = None,
         mode: RunMode | None = DEFAULT_MODE,
+        custom_instructions: str = "",
     ):
         self.name = display_name.strip() if display_name else self.default_name
         if not self.name:
@@ -148,10 +161,12 @@ class AgentA:
         self.model = model
         self._api_key = api_key
         self.mode = mode
+        self.custom_instructions = custom_instructions.strip()
 
     def respond(self, prompt: str, previous_message: str) -> str:
         return get_response(
-            prompt, previous_message, self.role, self.model, self._api_key, self.mode
+            prompt, previous_message, self.role, self.model, self._api_key,
+            self.mode, self.custom_instructions
         )
 
 
@@ -166,6 +181,7 @@ class AgentB:
         model: str = DEFAULT_MODEL,
         api_key: str | None = None,
         mode: RunMode | None = DEFAULT_MODE,
+        custom_instructions: str = "",
     ):
         self.name = display_name.strip() if display_name else self.default_name
         if not self.name:
@@ -176,8 +192,10 @@ class AgentB:
         self.model = model
         self._api_key = api_key
         self.mode = mode
+        self.custom_instructions = custom_instructions.strip()
 
     def respond(self, prompt: str, previous_message: str) -> str:
         return get_response(
-            prompt, previous_message, self.role, self.model, self._api_key, self.mode
+            prompt, previous_message, self.role, self.model, self._api_key,
+            self.mode, self.custom_instructions
         )

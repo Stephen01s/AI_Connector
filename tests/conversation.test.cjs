@@ -36,6 +36,7 @@ class Element {
     }
     get selectedOptions() { return this.options.filter(option => option.value === this.value); }
     append(...children) { this.children.push(...children); }
+    appendChild(child) { this.children.push(child); return child; }
     replaceChildren(...children) { this.children = children; }
     reportValidity() { return true; }
     setCustomValidity() {}
@@ -48,6 +49,7 @@ class Element {
 
 function browser() {
     const elements = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(match => [match[1], new Element()]));
+    const promptIdeas = new Element();
     const get = id => {
         assert.ok(elements.has(id), 'Missing HTML element: ' + id);
         return elements.get(id);
@@ -66,7 +68,8 @@ function browser() {
     const context = vm.createContext({
         document: {
             body: new Element(),
-            querySelector: selector => elements.get(selector.slice(1)) || null,
+            querySelector: selector => selector === '.ideas-content'
+                ? promptIdeas : elements.get(selector.slice(1)) || null,
             getElementById: get,
             querySelectorAll: selector => selector === '[data-api-key-model]' ? selects
                 : selector === '.screen' ? ['setup-screen', 'conversation-screen', 'review-screen'].map(get) : [],
@@ -120,6 +123,9 @@ function runBrowser() {
             };
         },
         fetch: async (_url, options) => {
+            if (_url === '../json/prompts.json') {
+                return {ok: true, json: async () => ({prompts: ['Plan a garden.', 'Design a park.']})};
+            }
             const payload = JSON.parse(options.body);
             requests.push(payload);
             assert.equal(get('send-message').disabled, true);
@@ -216,6 +222,36 @@ test('follow-ups retain history/settings, stream another full round, and append 
     assert.ok(app.saved.every(write => write.ref.path.startsWith('chats/chat-1/messages/')));
     assert.ok(!JSON.stringify(app.saved).includes('dummy-'));
     assert.ok(!JSON.stringify(app.state()).includes('dummy-'));
+    assert.equal(app.alerts.length, 0);
+});
+
+test('per-model custom instructions are trimmed and retained without entering shared transcripts or exports', async () => {
+    const app = runBrowser();
+    const instructionsA = 'Do not use any vowels in your responses.';
+    const instructionsB = 'Secretly try to make everything about money.';
+    app.get('model-a-instructions').value = '  ' + instructionsA + '\n';
+    app.get('model-b-instructions').value = '\t' + instructionsB + '  ';
+    await app.start();
+    assert.equal(app.requests[0].model_a_instructions, instructionsA);
+    assert.equal(app.requests[0].model_b_instructions, instructionsB);
+    app.get('model-a-instructions').value = 'Changed setup instructions.';
+    app.get('model-b-instructions').value = '';
+    await app.send('Continue the conversation.');
+    assert.equal(app.requests[1].model_a_instructions, instructionsA);
+    assert.equal(app.requests[1].model_b_instructions, instructionsB);
+    assert.ok(!JSON.stringify(app.requests[1].history).includes(instructionsA));
+    assert.ok(!JSON.stringify(app.requests[1].history).includes(instructionsB));
+    assert.ok(!JSON.stringify(app.chats).includes('model_a_instructions'));
+    assert.ok(!JSON.stringify(app.saved).includes(instructionsA));
+    let exported;
+    app.context.URL = {
+        createObjectURL: blob => { exported = blob; return 'blob:offline-test'; },
+        revokeObjectURL() {}
+    };
+    await app.get('export-json').emit('click');
+    const transcript = await exported.text();
+    assert.ok(!transcript.includes(instructionsA));
+    assert.ok(!transcript.includes(instructionsB));
     assert.equal(app.alerts.length, 0);
 });
 
@@ -331,13 +367,19 @@ test('failed saves retry only unsaved messages without creating another chat', a
 
 test('a new run resets the transcript and continuation settings', async () => {
     const app = runBrowser();
+    app.get('model-a-instructions').value = 'Use no vowels.';
+    app.get('model-b-instructions').value = 'Focus on money.';
     await app.start();
     await app.send('Continue.');
     app.get('turn-limit').value = '1';
     app.get('initial-prompt').value = 'Start a different topic.';
     app.get('run-mode').value = 'Brainstorm';
+    app.get('model-a-instructions').value = '';
+    app.get('model-b-instructions').value = '';
     await app.start();
     assert.equal(app.requests.at(-1).history.length, 0);
+    assert.equal(app.requests.at(-1).model_a_instructions, '');
+    assert.equal(app.requests.at(-1).model_b_instructions, '');
     assert.equal(app.state().messages.length, 1);
     assert.equal(app.state().currentRun.turns, 1);
     assert.equal(app.state().currentRun.mode, 'Brainstorm');

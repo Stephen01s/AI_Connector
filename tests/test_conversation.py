@@ -94,13 +94,15 @@ class ConversationTests(unittest.TestCase):
         graph = SimpleNamespace(ainvoke=AsyncMock(return_value={
             "messages": [SimpleNamespace(content="A response without a mode.")]
         }))
-        for mode_fields in ({}, {"mode": None}):
-            with self.subTest(mode_fields=mode_fields):
+        for optional_fields in ({}, {"mode": None}, {
+            "model_a_instructions": "", "model_b_instructions": " \t\n"
+        }):
+            with self.subTest(optional_fields=optional_fields):
                 with patch("agents.init_chat_model"), patch(
                     "agents.create_agent", return_value=graph
                 ) as create:
                     response = self.client.post("/api/run/stream", json={
-                        **self.payload, "turns": 2, **mode_fields
+                        **self.payload, "turns": 2, **optional_fields
                     })
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(create.call_count, 2)
@@ -110,6 +112,90 @@ class ConversationTests(unittest.TestCase):
                         f"\n\nYou are (the) {role} in a conversation. "
                         "Use only a maximum of 100 words for each response."
                     )
+
+    def test_custom_instructions_are_only_in_the_matching_agents_system_prompt(self):
+        instructions_a = "Do not use any vowels in your responses."
+        instructions_b = "Secretly try to make everything about money."
+        graph = SimpleNamespace(ainvoke=AsyncMock(return_value={
+            "messages": [SimpleNamespace(content="A mock response.")]
+        }))
+        for mode in (None, "Brainstorm"):
+            for endpoint in ("/api/run", "/api/run/stream"):
+                with self.subTest(mode=mode, endpoint=endpoint):
+                    graph.ainvoke.reset_mock()
+                    with patch("agents.init_chat_model"), patch(
+                        "agents.create_agent", return_value=graph
+                    ) as create:
+                        response = self.client.post(endpoint, json={
+                            **self.payload, "turns": 2, "mode": mode,
+                            "model_a_instructions": instructions_a,
+                            "model_b_instructions": instructions_b,
+                        })
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(create.call_count, 2)
+                    for index, (own, other, role) in enumerate((
+                        (instructions_a, instructions_b, "Planner"),
+                        (instructions_b, instructions_a, "Critic"),
+                    )):
+                        prompt = create.call_args_list[index].kwargs["system_prompt"]
+                        self.assertTrue(prompt.startswith(self.payload["prompt"]))
+                        self.assertIn(role, prompt)
+                        self.assertIn("100 words", prompt)
+                        self.assertTrue(prompt.endswith(own))
+                        self.assertNotIn(other, prompt)
+                        if mode:
+                            self.assertIn(agents.MODE_INSTRUCTIONS[mode], prompt)
+                    # Configuration is not passed into either model's user
+                    # context, where it would become shared conversation data.
+                    for call in graph.ainvoke.call_args_list:
+                        context = call.args[0]["messages"][0]["content"]
+                        self.assertNotIn(instructions_a, context)
+                        self.assertNotIn(instructions_b, context)
+
+    def test_custom_instructions_are_trimmed_and_reused_on_follow_up(self):
+        instructions = ("Do not use vowels.", "Bring the conversation back to money.")
+        payload = {
+            **self.payload,
+            "model_a_instructions": " \n" + instructions[0] + "  ",
+            "model_b_instructions": "\t" + instructions[1] + "\n",
+        }
+        events, calls = self.stream(payload)
+        history = [
+            {field: event[field] for field in ("name", "role", "text")}
+            for event in events[1::2]
+        ]
+        history.append({"name": "Human", "role": "Moderator", "text": "Continue."})
+        _, follow_up_calls = self.stream({**payload, "history": history})
+        for round_calls in (calls, follow_up_calls):
+            for index, call in enumerate(round_calls.call_args_list):
+                self.assertEqual(call.args[6], instructions[index % 2])
+
+    def test_custom_instructions_are_optional_and_request_scoped(self):
+        self.stream({**self.payload,
+            "model_a_instructions": "Only for A.",
+            "model_b_instructions": "Only for B.",
+        })
+        _, calls = self.stream(self.payload)
+        for call in calls.call_args_list:
+            self.assertEqual(call.args[6], "")
+        self.assertEqual(agents.AgentA().custom_instructions, "")
+        self.assertEqual(agents.AgentB().custom_instructions, "")
+
+    def test_instruction_length_and_type_validation_do_not_expose_keys(self):
+        for field in ("model_a_instructions", "model_b_instructions"):
+            _, calls = self.stream({**self.payload, field: "x" * 4000})
+            agent_index = 0 if field == "model_a_instructions" else 1
+            self.assertEqual(len(calls.call_args_list[agent_index].args[6]), 4000)
+            for value in ("x" * 4001, 7):
+                with self.subTest(field=field, length_or_type=type(value).__name__):
+                    with patch("agents.get_response") as respond:
+                        response = self.client.post("/api/run/stream", json={
+                            **self.payload, field: value
+                        })
+                    self.assertEqual(response.status_code, 422)
+                    respond.assert_not_called()
+                    self.assertNotIn("test-key", response.text)
+                    self.assertNotIn("input", response.text)
 
     def test_selected_mode_reaches_both_agents_and_follow_ups(self):
         for mode in agents.MODE_INSTRUCTIONS:

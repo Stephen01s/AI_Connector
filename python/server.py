@@ -48,6 +48,8 @@ class RunRequest(BaseModel):
     model_b_name: str | None = Field(default=None, max_length=50)
     model_a_role: str | None = Field(default=None, max_length=50)
     model_b_role: str | None = Field(default=None, max_length=50)
+    model_a_instructions: str = Field(default="", max_length=4000)
+    model_b_instructions: str = Field(default="", max_length=4000)
     model_a_model: ModelName = DEFAULT_MODEL
     model_b_model: ModelName = DEFAULT_MODEL
     model_a_api_key: SecretStr = Field(min_length=1, max_length=4096, repr=False, exclude=True)
@@ -56,6 +58,11 @@ class RunRequest(BaseModel):
     @field_validator("model_a_api_key", "model_b_api_key", mode="before")
     @classmethod
     def trim_api_key(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("model_a_instructions", "model_b_instructions", mode="before")
+    @classmethod
+    def trim_instructions(cls, value):
         return value.strip() if isinstance(value, str) else value
 
 
@@ -105,12 +112,14 @@ def _generate_events(request: RunRequest):
             model=request.model_a_model,
             api_key=request.model_a_api_key.get_secret_value(),
             mode=request.mode,
+            custom_instructions=request.model_a_instructions,
         ),
         AgentB(
             request.model_b_name, request.model_b_role,
             model=request.model_b_model,
             api_key=request.model_b_api_key.get_secret_value(),
             mode=request.mode,
+            custom_instructions=request.model_b_instructions,
         ),
     ]
     # Every request carries its own history, so separate users do not share
