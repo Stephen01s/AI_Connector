@@ -1674,3 +1674,11 @@ body .nav-links {
     color: #e6e9ef;
     border-color: #414958;
 }
+
+/* User Settings */
+.dark-mode .settings-form input:disabled {
+  background: #2d333e;
+  color: #aab3c2;
+  border-color: #414958;
+  opacity: 1;
+}
