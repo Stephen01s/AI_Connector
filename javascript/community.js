@@ -1,6 +1,5 @@
 
-import {collection, doc, getDoc, getDocs, orderBy, query, where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db } from './firebase.js';
+import {collection, doc, getDoc, getDocs, limit, orderBy, query, where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';import { db } from './firebase.js';
 import './account.js';
 
 const communityList = document.querySelector('#community-list');
@@ -267,10 +266,14 @@ function createCommunityCard(chat) {
 
     const firstMessage = chat.preview || chat.messages?.[0]?.content;
 
-    preview.textContent = firstMessage
-        ? firstMessage.slice(0, 120) +
-          (firstMessage.length > 120 ? '...' : '')
-        : 'View this conversation.';
+    if (typeof firstMessage === 'string' && firstMessage.trim()) {
+        preview.textContent = formatPreview(firstMessage);
+    } else if (currentMode === 'real') {
+        preview.textContent = 'Loading preview...';
+        loadMessagePreview(chat.id, preview, requestVersion);
+    } else {
+        preview.textContent = 'No conversation preview available.';
+    }
 
     const footer = document.createElement('div');
     footer.className = 'community-card-footer';
@@ -299,6 +302,65 @@ function createCommunityCard(chat) {
     card.append(title, author, preview, footer);
 
     communityList.append(card);
+}
+
+function formatPreview(content) {
+    const text = content.replace(/\s+/g, ' ').trim();
+    const maxLength = 200;
+
+    return text.length > maxLength
+        ? text.slice(0, maxLength).trimEnd() + '...'
+        : text;
+}
+
+async function loadMessagePreview(chatId, previewElement, version) {
+    try {
+        const messagesRef = collection(
+            db,
+            'chats',
+            chatId,
+            'messages'
+        );
+
+        const snapshot = await getDocs(
+            query(
+                messagesRef,
+                orderBy('timestamp', 'asc'),
+                limit(1)
+            )
+        );
+
+        if (
+            version !== requestVersion ||
+            currentMode !== 'real' ||
+            !previewElement.isConnected
+        ) {
+            return;
+        }
+
+        if (snapshot.empty) {
+            previewElement.textContent = 'No messages available.';
+            return;
+        }
+
+        const firstMessage = snapshot.docs[0].data().content;
+
+        previewElement.textContent =
+            typeof firstMessage === 'string' && firstMessage.trim()
+                ? formatPreview(firstMessage)
+                : 'No conversation preview available.';
+
+    } catch (error) {
+        console.error('Could not load message preview:', error);
+
+        if (
+            version === requestVersion &&
+            currentMode === 'real' &&
+            previewElement.isConnected
+        ) {
+            previewElement.textContent = 'Preview unavailable.';
+        }
+    }
 }
 
 async function showPublicChat(chatId) {

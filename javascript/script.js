@@ -317,7 +317,7 @@ async function saveRun() {
             const chat = await addDoc(collection(db, 'chats'), {
                 userId: profileId,
                 username,
-                title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
+                title: prompt,
                 preview: messages[0]?.[2]?.slice(0, 120) || '',
                 mode: currentRun.mode,
                 createdAt: serverTimestamp(),
