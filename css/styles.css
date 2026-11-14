@@ -857,10 +857,10 @@ footer span {
   display: grid;
   width: 100%;
   gap: 5px;
-  padding: 10px;
+  padding: 12px;
   text-align: left;
   border: 1px solid #d7e0ee;
-  border-radius: 7px;
+  border-radius: 8px;
   background: #fff;
   color: #263b5c;
   transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
@@ -873,15 +873,33 @@ footer span {
   background: #f5f7fb;
 }
 
+.run-list-card:hover {
+  background: #f8faff;
+  border-color: #a8b9d5;
+  box-shadow: 0 2px 8px rgba(29, 50, 85, .06);
+}
+
+.run-list-card.selected,
+.run-list-card.selected:hover {
+  background: #f3f6fc;
+  border-color: #7184a6;
+}
+
 .run-list-card strong {
-  font-size: 11px;
+  display: block;
+  font-size: 13.38px;
+  font-weight: 500;
   line-height: 1.5;
+  letter-spacing: .4px;
   overflow-wrap: anywhere;
 }
 
 .run-list-card small {
+  display: block;
   color: #718099;
-  font-size: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 5px;
 }
 
 .run-card-actions {
@@ -947,8 +965,17 @@ footer span {
 }
 
 .run-detail-empty {
-  color: #7d8591;
-  font-size: 10px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: #718099;
+  font-size: 11px;
 }
 
 .run-messages {
@@ -1794,40 +1821,7 @@ body .nav-links {
 }
 
 
-/* Runs page headings */
-.runs-list-panel h2,
-.run-detail-panel h2 {
-    font-size: 14px;
-    font-weight: 700;
-    color: #151922;
-    margin-bottom: 14px;
-}
-
-
-.run-list-card {
-  padding: 12px;
-  padding-right: 72px; /* Keep room for share/delete controls */
-  border-radius: 8px;
-  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
-}
-
-.run-list-card:hover {
-  background: #f8faff;
-  border-color: #a8b9d5;
-  box-shadow: 0 2px 8px rgba(29, 50, 85, .06);
-}
-
-.run-list-card.selected,
-.run-list-card.selected:hover {
-  background: #f3f6fc;
-  border-color: #7184a6;
-}
-
-.dark-mode .runs-list-panel h2,
-.dark-mode .run-detail-panel h2 {
-  color: #e6e9ef;
-}
-
+/* Runs: selected and hovered chat cards in dark mode */
 .dark-mode .run-list-card:hover {
   background: #2c3442;
   border-color: #596b86;
@@ -1839,21 +1833,7 @@ body .nav-links {
   border-color: #7895ce;
 }
 
-
-/* Runs page: centered empty conversation state */
-.run-detail-empty {
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  margin: 0;
-  padding: 24px;
-  text-align: center;
-  color: #718099;
-  font-size: 11px;
-}
+/* Runs: centered empty conversation state */
 .run-detail-empty[hidden] { display: none; }
 .run-detail-empty-icon {
   width: 52px;
@@ -1903,15 +1883,24 @@ body .nav-links {
     background: #252e3b;
     border-color: #39485c;
 }
-/* Runs panel headings */
+/* Runs: panel headings and selected conversation title */
 #runs-list-title,
-#run-detail-title {
-    font-size: 16px;
-    font-weight: 700;
+.run-detail-panel:not(.has-selected-run) #run-detail-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 18px;
 }
 
-/* Selected conversation title */
-.run-detail-panel.has-selected-run #run-detail-title {
-    font-size: 17px;
-    font-weight: 750;
+.dark-mode .runs-list-panel h2,
+.dark-mode .run-detail-panel h2 {
+  color: #e6e9ef;
+}
+
+/* Dark mode - improved readability */
+.dark-mode .run-list-card strong {
+    color: #edf2fa;
+}
+
+.dark-mode .run-list-card small {
+    color: #aabbd4;
 }
