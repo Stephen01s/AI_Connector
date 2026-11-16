@@ -1450,14 +1450,14 @@ body .nav-links {
   margin: 0;
 }
 
-/* Community page heading */
-.community-main .page-heading h1 {
+/* Page heading */
+.page-heading h1 {
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 6px;
 }
 
-.community-main .page-heading p {
+.page-heading p {
   font-size: 13px;
   line-height: 1.5;
 }
