@@ -218,13 +218,13 @@ async function loadRuns() {
         );
 
         deleteButton.title = 'Delete chat';
-        deleteButton.textContent = '×';
+        deleteButton.textContent = 'x';
 
         deleteButton.addEventListener('click', async event => {
             event.stopPropagation();
 
             if (!window.confirm(
-                'are you sure you want to delete this chat? this action cannot be undone.'
+                'Are you sure you want to delete this chat? this action cannot be undone.'
             )) {
                 return;
             }
