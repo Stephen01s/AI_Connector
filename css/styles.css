@@ -566,6 +566,79 @@ footer span {
 }
 
 /* Dialogs and data previews */
+.analysis-trigger {
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 1px solid #dfe2e8;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.analysis-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.run-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.run-detail-heading .analysis-trigger {
+  margin-top: 0;
+}
+
+.run-detail-heading h2 {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+.sign-in-dialog.analysis-dialog {
+  width: min(720px, calc(100% - 28px));
+}
+
+.analysis-dialog [hidden] {
+  display: none;
+}
+
+.analysis-dialog .dialog-actions {
+  flex-wrap: wrap;
+}
+
+.analysis-notice,
+#analysis-status {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.analysis-result {
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.analysis-reader-guide {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #dfe2e8;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.analysis-reader-guide summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.analysis-reader-guide li {
+  margin-bottom: 8px;
+}
+
 .sign-in-dialog {
   width: min(460px, calc(100% - 28px));
   max-height: 90vh;

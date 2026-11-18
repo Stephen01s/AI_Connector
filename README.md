@@ -38,6 +38,7 @@ The backend provides these routes:
 - http://localhost:8000/docs - opens the FastAPI interactive documentation
 - POST http://localhost:8000/api/run - runs the two-agent conversation
 - POST http://localhost:8000/api/run/stream - streams each completed response to the website
+- POST http://localhost:8000/api/analyze - analyzes a conversation using Model A's credentials
 
 The backend does not currently define a GET root route, so visiting
 http://localhost:8000/ will correctly return 404 Not Found. This does not
@@ -80,9 +81,10 @@ manual deploy, upload a folder containing `_redirects` and the `html/`,
 `css/`, `javascript/`, `json/`, and `assets/` frontend folders.
 The homepage will then open at https://jashai.netlify.app/.
 
-The frontend continues to call the FastAPI backend on Render using `API_URL`
-in `javascript/script.js`. Netlify's static deployment does not start the
-Python server.
+The shared configuration in javascript/api-config.js selects
+http://localhost:8000 when a page is opened on localhost, 127.0.0.1, or IPv6
+loopback. Hosted pages call the FastAPI backend on Render. Netlify's static
+deployment does not start the Python server.
 
 ## Firebase sign-in and legacy profiles
 
@@ -123,6 +125,58 @@ the site's origin, so it is temporary storage rather than an encrypted vault.
 Never hard-code real keys in source files or commit .env. The optional local
 .env remains supported for direct Python-agent development, but website runs
 require keys supplied through the dialog rather than using a shared server key.
+
+## Third-agent conversation analysis
+
+After a round finishes, click Analyze conversation beneath the human-message
+input. A separate modal opens and shows the observer's report. On the Runs
+page, select a saved run and use the Analyze conversation button beside its
+title to generate a report. When a current report exists, the button changes
+to View analysis.
+
+The observer checks for sycophancy (unsupported agreement or flattery) and
+unexpected information instead of providing a general summary. It distinguishes
+reasoned agreement from people-pleasing and new ideas from unverified claims.
+It also assesses goal alignment and interaction patterns with message references.
+
+Each new report includes plain-language guidance on ethical implications and
+how prompts, roles, modes, and later human requests shape the agents' task goals.
+It identifies relevant risks of acting on the output, suggests a concrete
+verification or oversight step, and poses a reflection question. It must not
+invent private instructions, hidden motives, or harms not shown by the evidence.
+
+The modal's expandable How to read this report guide helps readers interpret
+agreement, unexpected claims, prompt-defined goals, and their own responsibility
+for decisions. It is available even when viewing an older saved report. Use
+Generate again to replace an older report with the new checks; reports are not
+automatically regenerated or billed.
+
+The observer has its own neutral system prompt rather than inheriting Model A's
+role, mode instructions, or custom instructions. It receives the supplied prompt,
+mode, and transcript, not the participants' full system prompts or private
+custom instructions. Observations are not psychological diagnoses, factual
+verification, an ethical certification, or proof of inherent model traits.
+
+- The observer uses the same model and provider session key as Model A.
+  If that provider's key is missing, the existing API-key dialog opens;
+  Model B's key is not required.
+- Generating a report is one additional, billable AI request. Reopening an
+  unchanged saved report does not make another model request. Generate again
+  explicitly requests a fresh report; Change key and retry replaces the
+  provider key and generates again.
+- Reports are separate from chat messages and never increase the turn count.
+  Continuing the conversation invalidates the old report.
+- When signed in and the run is saved, the report is stored on that chat.
+  Unsaved runs retain their report only on the open page. Keys are never
+  stored in the report or chat metadata.
+- New saved runs include the full initial prompt and Model A's model name.
+  Older runs did not save those fields: the modal asks for the original
+  Model A model and labels title-only prompt context as incomplete.
+- Closing the modal stops the browser from waiting for the report. An AI
+  request already accepted by the provider may still finish and be billed.
+
+Both the frontend and Python backend must be updated for analysis to work.
+Local development uses the local backend automatically; keep Uvicorn running.
 
 ## Custom instructions for each model
 
@@ -192,15 +246,15 @@ request, so very long conversations can increase API costs or reach a
 model's context limit.
 
 Deploy both the frontend and the updated Python backend for follow-ups to
-work on the hosted site. The current API_URL in javascript/script.js points
-to Render; change it to http://localhost:8000 to test against a local backend.
+work on the hosted site. The shared API configuration uses the local Python
+server when the frontend is opened on localhost, and Render when hosted.
 
 ## Offline regression tests
 
 With the Python dependencies and Node.js installed, run from this folder:
 
     python -B -m unittest discover -s tests -p test_*.py -v
-    node --test tests/conversation.test.cjs
+    node --test tests/conversation.test.cjs tests/analysis.test.cjs tests/runs.test.cjs
 
 These tests mock AI providers and Firebase; they do not make paid model calls
 or write to the hosted database.
@@ -212,7 +266,9 @@ or write to the hosted database.
 - javascript/ - browser JavaScript modules and Firebase setup
 - python/server.py - FastAPI endpoint that runs the feedback loop
 - javascript/api-keys.js - provider key dialog and session storage
-- python/agents.py - Model A and Model B with per-request provider credentials
+- javascript/api-config.js - shared local/hosted backend selection
+- javascript/analysis.js - shared observer modal and analysis requests
+- python/agents.py - conversation agents and a neutral observer with per-request credentials
 - json/prompts.json - prompt data
 - requirements.txt - Python dependencies
 - assets/ - reserved for future icons or imagery

@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Runs — Jash</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="../css/styles.css?v=observer-2" />
 </head>
 
 <body>
@@ -36,7 +36,10 @@
           <div id="runs-list" class="runs-list"></div>
         </section>
         <section class="panel run-detail-panel" aria-labelledby="run-detail-title">
-          <h2 id="run-detail-title">Select a chat</h2>
+          <div class="run-detail-heading">
+            <h2 id="run-detail-title">Select a chat</h2>
+            <button id="analyze-saved-run" class="light analysis-trigger" type="button" hidden disabled>Analyze conversation</button>
+          </div>
           <p id="run-detail-empty" class="run-detail-empty">Choose a run to view its conversation.</p>
           <div id="run-messages" class="run-messages"></div>
         </section>
@@ -44,7 +47,10 @@
     </main>
   </div>
   <script defer src="../javascript/theme.js" ></script>
-  <script type="module" src="../javascript/runs.js"></script>
+  <script defer src="../javascript/api-config.js?v=1"></script>
+  <script defer src="../javascript/api-keys.js?v=observer-1"></script>
+  <script defer src="../javascript/analysis.js?v=2"></script>
+  <script type="module" src="../javascript/runs.js?v=observer-1"></script>
 </body>
 
 </html>

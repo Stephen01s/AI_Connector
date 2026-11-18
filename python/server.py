@@ -4,13 +4,13 @@ import json
 import time
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, SecretStr, field_validator
 from starlette.responses import JSONResponse, StreamingResponse
 
-from agents import DEFAULT_MODE, DEFAULT_MODEL, AgentA, AgentB, ModelName, RunMode
+from agents import DEFAULT_MODE, DEFAULT_MODEL, AgentA, AgentB, ModelName, ObserverAgent, RunMode
 
 
 app = FastAPI(title="Two-Agent Prototype")
@@ -21,6 +21,10 @@ RUN_ERROR_MESSAGE = (
 PROVIDER_SETUP_MESSAGE = (
     "The selected AI provider is not installed on the server. "
     "Install requirements.txt and restart the server."
+)
+ANALYSIS_ERROR_MESSAGE = (
+    "Could not analyze the conversation. Check Model A's API key, model access, "
+    "and usage limits, then try again."
 )
 # TURN_DELAY_SECONDS = 3
 app.add_middleware(
@@ -84,6 +88,25 @@ class Message(ConversationMessage):
 class RunResponse(BaseModel):
     prompt: str
     messages: list[Message]
+
+
+class AnalysisRequest(BaseModel):
+    prompt: str = Field(min_length=1)
+    prompt_is_complete: bool = True
+    mode: RunMode | None = DEFAULT_MODE
+    messages: list[ConversationMessage] = Field(min_length=1)
+    model_a_model: ModelName = DEFAULT_MODEL
+    model_a_api_key: SecretStr = Field(min_length=1, max_length=4096, repr=False, exclude=True)
+
+    @field_validator("model_a_api_key", mode="before")
+    @classmethod
+    def trim_api_key(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class AnalysisResponse(BaseModel):
+    text: str
+    time: str
 
 
 def _conversation_context(history: list[ConversationMessage], name: str, role: str) -> str:
@@ -156,6 +179,28 @@ def _generate_messages(request: RunRequest):
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/api/analyze", response_model=AnalysisResponse)
+def analyze_conversation(request: AnalysisRequest, response: Response) -> AnalysisResponse:
+    """Analyze a snapshot without adding a message or changing its turn count."""
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        observer = ObserverAgent(
+            model=request.model_a_model,
+            api_key=request.model_a_api_key.get_secret_value(),
+        )
+        text = observer.analyze(
+            request.prompt,
+            [message.model_dump() for message in request.messages],
+            request.mode,
+            request.prompt_is_complete,
+        )
+        return AnalysisResponse(text=text, time=datetime.now(timezone.utc).isoformat())
+    except ImportError:
+        raise HTTPException(status_code=503, detail=PROVIDER_SETUP_MESSAGE) from None
+    except Exception:
+        raise HTTPException(status_code=502, detail=ANALYSIS_ERROR_MESSAGE) from None
 
 
 @app.post("/api/run", response_model=RunResponse)

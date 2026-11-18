@@ -6,6 +6,32 @@
         anthropic: 'Anthropic'
     };
     const storagePrefix = 'jash.api-key.';
+    const models = [
+        {model: 'google_genai:gemini-3.5-flash-lite', provider: 'google_genai', label: 'Gemini 3.5 Flash Lite'},
+        {model: 'openai:gpt-4o', provider: 'openai', label: 'GPT-4o'},
+        {model: 'anthropic:claude-sonnet-5-5', provider: 'anthropic', label: 'Claude Sonnet 5.5'}
+    ];
+
+    // The Runs page also needs the same provider-key dialog, but has no model
+    // configuration form. Build it there rather than storing keys in chats.
+    if (!document.querySelector('#api-key-dialog')) {
+        document.body.insertAdjacentHTML('beforeend', `
+            <dialog id="api-key-dialog" class="sign-in-dialog" aria-labelledby="api-key-title" aria-describedby="api-key-description">
+              <form id="api-key-form">
+                <div class="dialog-heading">
+                  <div><h2 id="api-key-title">API key</h2><p id="api-key-description"></p></div>
+                  <button id="cancel-api-key" class="dialog-close" type="button" aria-label="Cancel">&times;</button>
+                </div>
+                <p class="api-key-notice">Your key is saved for this tab's session. It is sent to this app's Python server and the selected AI provider. API usage is billed to your provider account.</p>
+                <label for="api-key-input">API key
+                  <input id="api-key-input" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="4096" required />
+                </label>
+                <p id="api-key-error" class="api-key-error" role="alert"></p>
+                <div class="dialog-actions"><button class="primary" type="submit">Save for this tab</button></div>
+              </form>
+            </dialog>
+        `);
+    }
 
     const modelSelects = [
         ...document.querySelectorAll('[data-api-key-model]')
@@ -168,6 +194,13 @@
         return credentials;
     }
 
+    async function getModelCredentials(model, replace = false) {
+        const selection = models.find(item => item.model === model);
+        if (!selection) throw new Error('The selected model is unavailable.');
+        const apiKey = await requestKey(selection, replace);
+        return apiKey ? {model: selection.model, apiKey} : null;
+    }
+
     // Clear validation errors when typing a new API key.
     keyInput.addEventListener('input', () => {
         keyInput.setCustomValidity('');
@@ -201,7 +234,7 @@
     // Clear all saved API keys.
     document.querySelector(
         '#clear-api-keys'
-    ).addEventListener('click', () => {
+    )?.addEventListener('click', () => {
         try {
             for (const provider of Object.keys(providers)) {
                 sessionStorage.removeItem(
@@ -218,6 +251,8 @@
 
     // Make credentials available to the run functionality.
     window.apiKeys = {
-        getRunCredentials
+        getRunCredentials,
+        getModelCredentials,
+        models
     };
 })();

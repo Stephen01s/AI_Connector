@@ -1,11 +1,11 @@
 import {
-    addDoc, collection, doc, getDoc, serverTimestamp, writeBatch
+    addDoc, collection, doc, getDoc, serverTimestamp, updateDoc, writeBatch
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
 const { getRoleValue, updateModelCards } = window.roleControls;
-const API_URL = 'https://ai-connector-szkl.onrender.com';
+const API_URL = window.appConfig.apiUrl;
 
 let messages = [];
 let activeChatId = null;
@@ -14,6 +14,7 @@ let currentRun = null;
 let isRunning = false;
 let savedMessageCount = 0;
 let completedTurns = 0;
+let currentAnalysis = null;
 
 function formatMessageTime(time) {
     const date = new Date(time);
@@ -61,6 +62,9 @@ function setRunBusy(busy) {
     startButton.textContent = busy ? 'Running...' : 'Start Run';
     document.querySelector('#send-message').disabled = busy || !currentRun;
     document.querySelector('#message-input').disabled = busy || !currentRun;
+    document.querySelector('#analyze-conversation').disabled = busy || !currentRun || !messages.length;
+    document.querySelector('#analyze-conversation').textContent =
+        currentAnalysis ? 'View analysis' : 'Analyze conversation';
 }
 
 renderMessages(document.querySelector('#messages'));
@@ -187,6 +191,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
         };
         updateModelCards();
         messages = [];
+        currentAnalysis = null;
         activeChatId = null;
         savedMessageCount = 0;
         completedTurns = 0;
@@ -213,6 +218,7 @@ document.querySelector('#start-run').addEventListener('click', async () => {
 });
 
 async function runConversationRound([modelA, modelB]) {
+    currentAnalysis = null;
     const { turns } = currentRun;
     // Each follow-up adds another round to the conversation's AI turn count.
     const targetTurns = completedTurns + turns;
@@ -320,6 +326,8 @@ async function saveRun() {
                 title: prompt.length > 70 ? `${prompt.slice(0, 67)}…` : prompt,
                 preview: messages[0]?.[2]?.slice(0, 120) || '',
                 mode: currentRun.mode,
+                prompt: currentRun.prompt,
+                model_a_model: currentRun.model_a_model,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -337,7 +345,10 @@ async function saveRun() {
                 timestamp: new Date(time)
             });
         }
-        batch.update(doc(db, 'chats', activeChatId), { updatedAt: serverTimestamp() });
+        batch.update(doc(db, 'chats', activeChatId), {
+            updatedAt: serverTimestamp(),
+            analysis: null
+        });
         await batch.commit();
         savedMessageCount = messages.length;
         status.textContent += ' · Saved to your runs';
@@ -373,6 +384,27 @@ document.querySelector('#message-form').addEventListener('submit', async event =
         setRunBusy(false);
         input.focus();
     }
+});
+
+document.querySelector('#analyze-conversation').addEventListener('click', async () => {
+    if (isRunning || !currentRun || !messages.length) return;
+    const run = currentRun;
+    const messageCount = messages.length;
+    await window.conversationAnalysis.open({
+        prompt: run.prompt,
+        mode: run.mode,
+        model: run.model_a_model,
+        messages: messages.map(([name, role, text]) => ({name, role, text})),
+        analysis: currentAnalysis,
+        onResult: async report => {
+            if (currentRun !== run || messages.length !== messageCount) return;
+            currentAnalysis = report;
+            document.querySelector('#analyze-conversation').textContent = 'View analysis';
+            if (activeChatId) {
+                await updateDoc(doc(db, 'chats', activeChatId), {analysis: report});
+            }
+        }
+    });
 });
 
 document.querySelector('#save-local').addEventListener('click', () =>

@@ -10,6 +10,33 @@ const runsList = document.querySelector('#runs-list');
 const runMessages = document.querySelector('#run-messages');
 const detailTitle = document.querySelector('#run-detail-title');
 const detailEmpty = document.querySelector('#run-detail-empty');
+const analysisButton = document.querySelector('#analyze-saved-run');
+let selectedChat = null;
+let selectedMessages = [];
+let selectionVersion = 0;
+
+analysisButton.addEventListener('click', async () => {
+    if (!selectedChat || !selectedMessages.length || analysisButton.disabled) return;
+    const chat = selectedChat;
+    await window.conversationAnalysis.open({
+        prompt: chat.prompt || chat.title || 'Original prompt unavailable.',
+        promptIsComplete: Boolean(chat.prompt),
+        mode: chat.mode ?? null,
+        model: chat.model_a_model || null,
+        messages: selectedMessages,
+        analysis: chat.analysis,
+        onResult: async report => {
+            // Retain the report in this page even if saving it is unavailable.
+            chat.analysis = report;
+            chat.model_a_model = report.model;
+            if (selectedChat === chat) analysisButton.textContent = 'View analysis';
+            await updateDoc(doc(db, 'chats', chat.id), {
+                analysis: report,
+                model_a_model: report.model
+            });
+        }
+    });
+});
 
 document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
@@ -112,6 +139,11 @@ async function loadRuns() {
                 if (!runsList.children.length) status.textContent = 'No saved chats yet. Start a run from Home while signed in to save one.';
                 else status.textContent = 'Chat deleted.';
                 if (button.classList.contains('selected')) {
+                    ++selectionVersion;
+                    selectedChat = null;
+                    selectedMessages = [];
+                    analysisButton.hidden = true;
+                    analysisButton.disabled = true;
                     detailTitle.textContent = '';
                     runMessages.replaceChildren();
                     detailEmpty.textContent = 'Select a chat to view its messages.';
@@ -131,6 +163,12 @@ async function loadRuns() {
 }
 
 async function selectRun(chat) {
+    const version = ++selectionVersion;
+    selectedChat = chat;
+    selectedMessages = [];
+    analysisButton.hidden = false;
+    analysisButton.disabled = true;
+    analysisButton.textContent = 'Analyze conversation';
     runsList.querySelectorAll('.run-card-wrap').forEach(card => {
         card.querySelector('.run-list-card').classList.toggle('selected', card.dataset.chatId === chat.id);
     });
@@ -143,6 +181,7 @@ async function selectRun(chat) {
         orderBy('timestamp', 'asc')
     );
     const snapshot = await getDocs(messagesQuery);
+    if (version !== selectionVersion) return;
     if (snapshot.empty) {
         detailEmpty.textContent = 'This chat has no saved messages.';
         detailEmpty.hidden = false;
@@ -151,6 +190,11 @@ async function selectRun(chat) {
 
     snapshot.forEach(message => {
         const data = message.data();
+        selectedMessages.push({
+            name: data.agentId || 'Unknown participant',
+            role: data.role || 'assistant',
+            text: data.content || ''
+        });
         const row = document.createElement('article');
         row.className = 'run-message';
         const byline = document.createElement('div');
@@ -163,6 +207,11 @@ async function selectRun(chat) {
         row.append(byline, content, time);
         runMessages.append(row);
     });
+    analysisButton.disabled = !selectedMessages.length;
+    if (chat.analysis?.message_count === selectedMessages.length &&
+        typeof chat.analysis.text === 'string') {
+        analysisButton.textContent = 'View analysis';
+    }
 }
 
 function eyeIcon() {

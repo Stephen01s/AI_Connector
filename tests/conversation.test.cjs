@@ -88,6 +88,7 @@ function browser() {
         console: {error() {}},
         TextDecoder, Uint8Array, Date, Blob, URL
     });
+    vm.runInContext(readFileSync(join(root, 'javascript/api-config.js'), 'utf8'), context);
     return {context, get, storage, alerts, selects};
 }
 
@@ -98,8 +99,10 @@ function runBrowser() {
     const saved = [];
     const chats = [];
     const credentialModels = [];
+    const analysisContexts = [];
+    const updates = [];
     let nextId = 0;
-    const controls = {cancel: false, error: false, gate: null, failSave: false};
+    const controls = {cancel: false, error: false, gate: null, failSave: false, report: null};
     Object.assign(context, {
         db: {},
         usernameSessionKey: 'profile',
@@ -111,6 +114,7 @@ function runBrowser() {
             return {id: 'chat-' + chats.length};
         },
         serverTimestamp: () => 'server-time',
+        updateDoc: async (ref, data) => updates.push({ref, data}),
         writeBatch: () => {
             const writes = [];
             return {
@@ -170,6 +174,12 @@ function runBrowser() {
             ];
         }
     };
+    context.window.conversationAnalysis = {
+        open: async input => {
+            analysisContexts.push(input);
+            if (controls.report) await input.onResult(controls.report);
+        }
+    };
     get('initial-prompt').value = 'Plan a garden.';
     get('turn-limit').value = '3';
     get('run-mode').value = '';
@@ -180,7 +190,7 @@ function runBrowser() {
     const source = readFileSync(join(root, 'javascript/script.js'), 'utf8').replace(/^import[\s\S]*?;\r?\n/gm, '');
     vm.runInContext(source, context);
     return {
-        ...app, controls, requests, saved, chats, credentialModels,
+        ...app, controls, requests, saved, chats, credentialModels, analysisContexts, updates,
         state: () => JSON.parse(vm.runInContext('JSON.stringify({messages, currentRun, isRunning, savedMessageCount, completedTurns})', context)),
         start: () => get('start-run').emit('click'),
         send: text => { get('message-input').value = text; return get('message-form').emit('submit'); }
@@ -223,6 +233,36 @@ test('follow-ups retain history/settings, stream another full round, and append 
     assert.ok(!JSON.stringify(app.saved).includes('dummy-'));
     assert.ok(!JSON.stringify(app.state()).includes('dummy-'));
     assert.equal(app.alerts.length, 0);
+});
+
+test('active analysis uses the original Model A and transcript without adding turns', async () => {
+    const app = runBrowser();
+    assert.equal(app.get('analyze-conversation').disabled, true);
+    await app.start();
+    assert.equal(app.get('analyze-conversation').disabled, false);
+    const before = app.state();
+    const count = app.get('turn-count').textContent;
+    app.controls.report = {
+        text: 'Observer report', model: 'openai:gpt-4o',
+        message_count: 3, time: new Date().toISOString()
+    };
+    await app.get('analyze-conversation').emit('click');
+    const input = app.analysisContexts[0];
+    assert.equal(input.model, 'openai:gpt-4o');
+    assert.equal(input.prompt, before.currentRun.prompt);
+    assert.equal(input.messages.length, before.messages.length);
+    assert.equal(app.get('turn-count').textContent, count);
+    assert.equal(app.state().messages.length, before.messages.length);
+    assert.equal(app.chats[0].data.model_a_model, input.model);
+    assert.equal(app.chats[0].data.prompt, input.prompt);
+    assert.equal(app.updates[0].data.analysis.text, 'Observer report');
+    app.controls.report = null;
+    await app.get('analyze-conversation').emit('click');
+    assert.equal(app.analysisContexts[1].analysis.text, 'Observer report');
+    await app.send('Continue with new information.');
+    await app.get('analyze-conversation').emit('click');
+    assert.equal(app.analysisContexts[2].analysis, null);
+    assert.equal(app.analysisContexts[2].messages.length, 7);
 });
 
 test('per-model custom instructions are trimmed and retained without entering shared transcripts or exports', async () => {

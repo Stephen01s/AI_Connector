@@ -110,6 +110,7 @@ class ConversationTests(unittest.TestCase):
                     self.assertEqual(call.kwargs["system_prompt"],
                         self.payload["prompt"] +
                         f"\n\nYou are (the) {role} in a conversation. "
+                        "Your role is the highest priority to follow everything else is secondary. "
                         "Use only a maximum of 100 words for each response."
                     )
 
