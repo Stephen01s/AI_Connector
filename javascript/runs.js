@@ -34,7 +34,8 @@ const emptyDescription = document.querySelector(
     '#run-detail-empty-description'
 );
 
-// Page navigationconst analysisButton = document.querySelector('#analyze-saved-run');
+// Page navigation
+const analysisButton = document.querySelector('#analyze-saved-run');
 let selectedChat = null;
 let selectedMessages = [];
 let selectionVersion = 0;
