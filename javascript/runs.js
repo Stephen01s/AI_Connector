@@ -40,6 +40,15 @@ let selectedChat = null;
 let selectedMessages = [];
 let selectionVersion = 0;
 
+function clearAnalysisSelection() {
+    ++selectionVersion;
+    selectedChat = null;
+    selectedMessages = [];
+    analysisButton.hidden = true;
+    analysisButton.disabled = true;
+    analysisButton.textContent = 'Analyze conversation';
+}
+
 analysisButton.addEventListener('click', async () => {
     if (!selectedChat || !selectedMessages.length || analysisButton.disabled) return;
     const chat = selectedChat;
@@ -144,7 +153,7 @@ async function loadRuns() {
         button.append(title, date);
 
         button.addEventListener('click', () => {
-            selectRun(chat).catch(error => {
+            return selectRun(chat).catch(error => {
                 console.error(
                     'Could not load conversation:',
                     error
@@ -293,7 +302,9 @@ async function loadRuns() {
                 // If the selected conversation was deleted,
                 // restore the normal title and empty state.
                 if (button.classList.contains('selected')) {
-                    detailTitle.textContent = '';
+                    clearAnalysisSelection();
+                    detailPanel.classList.remove('has-selected-run');
+                    detailTitle.textContent = 'Select a chat';
                     runMessages.replaceChildren();
 
                     emptyTitle.textContent =
@@ -333,6 +344,8 @@ async function loadRuns() {
 
 // Load the messages for a selected conversation
 async function selectRun(chat) {
+    clearAnalysisSelection();
+    const version = selectionVersion;
     runsList.querySelectorAll('.run-card-wrap').forEach(card => {
         card.querySelector('.run-list-card').classList.toggle(
             'selected',
@@ -355,7 +368,20 @@ async function selectRun(chat) {
         orderBy('timestamp', 'asc')
     );
 
-    const snapshot = await getDocs(messagesQuery);
+    let snapshot;
+    try {
+        snapshot = await getDocs(messagesQuery);
+    } catch (error) {
+        if (version !== selectionVersion) return;
+        clearAnalysisSelection();
+        emptyTitle.textContent = 'Conversation unavailable';
+        emptyDescription.textContent = 'Could not load this conversation. Please try again.';
+        detailEmpty.hidden = false;
+        throw error;
+    }
+    if (version !== selectionVersion) return;
+    selectedChat = chat;
+    analysisButton.hidden = false;
     if (snapshot.empty) {
         emptyTitle.textContent = 'No messages yet';
 
@@ -372,6 +398,11 @@ async function selectRun(chat) {
 
     snapshot.forEach(message => {
         const data = message.data();
+        selectedMessages.push({
+            name: data.agentId || 'Unknown participant',
+            role: data.role || 'assistant',
+            text: data.content || ''
+        });
         const row = document.createElement('article');
         row.className = 'run-message';
 

@@ -6,6 +6,7 @@ const root = join(__dirname, '..');
 
 function browser(page = 'runs.html', hostname = 'localhost') {
     const elements = new Map();
+    const nodes = [];
     class Element {
         constructor(tag = 'div') {
             this.tagName = tag.toUpperCase();
@@ -18,6 +19,8 @@ function browser(page = 'runs.html', hostname = 'localhost') {
             this.hidden = false;
             this.disabled = false;
             this.open = false;
+            this.style = {};
+            this.isConnected = true;
             this.classList = {
                 contains: name => this.className.split(/\s+/).includes(name),
                 add: name => { this.className = [...new Set([...this.className.split(/\s+/), name])].join(' '); },
@@ -37,10 +40,10 @@ function browser(page = 'runs.html', hostname = 'localhost') {
         removeEventListener(type, callback) {
             this.listeners.set(type, (this.listeners.get(type) || []).filter(item => item.callback !== callback));
         }
-        async emit(type) {
+        async emit(type, event = {}) {
             for (const {callback, options} of [...(this.listeners.get(type) || [])]) {
                 if (options.once) this.removeEventListener(type, callback);
-                await callback({preventDefault() {}, stopPropagation() {}});
+                await callback({target: this, preventDefault() {}, stopPropagation() {}, ...event});
             }
         }
         append(...children) {
@@ -71,26 +74,43 @@ function browser(page = 'runs.html', hostname = 'localhost') {
         }
     }
     function register(html) {
-        for (const match of html.matchAll(/<([a-z][a-z0-9-]*)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
+        for (const match of html.matchAll(/<([a-z][a-z0-9-]*)\b([^>]*)>/gi)) {
             const element = new Element(match[1]);
-            element.id = match[3];
-            element.hidden = /\bhidden\b/.test(match[2]);
-            element.disabled = /\bdisabled\b/.test(match[2]);
-            element.className = match[2].match(/\bclass="([^"]*)"/)?.[1] || '';
-            elements.set(element.id, element);
+            element.id = match[2].match(/\bid\s*=\s*"([^"]+)"/)?.[1] || '';
+            element.hidden = /(?:^|\s)hidden(?:\s|$|=)/.test(match[2]);
+            element.disabled = /(?:^|\s)disabled(?:\s|$|=)/.test(match[2]);
+            element.className = match[2].match(/\bclass\s*=\s*"([^"]*)"/)?.[1] || '';
+            nodes.push(element);
+            if (element.id) elements.set(element.id, element);
         }
     }
     register(readFileSync(join(root, 'html', page), 'utf8'));
     const storage = new Map();
+    const documentEvents = new Element('document');
+    const windowEvents = new Element('window');
     const context = vm.createContext({
         document: {
             body: new Element('body'),
             getElementById: id => elements.get(id) || null,
-            querySelector: selector => elements.get(selector.slice(1)) || null,
+            querySelector: selector => selector.startsWith('#')
+                ? elements.get(selector.slice(1)) || null
+                : nodes.find(element => element.classList.contains(selector.slice(1))) || null,
             querySelectorAll: () => [],
-            createElement: tag => new Element(tag)
+            createElement: tag => new Element(tag),
+            addEventListener: (...args) => documentEvents.addEventListener(...args)
         },
-        window: {location: {hostname, replace() {}}, confirm: () => false},
+        window: {
+            location: {hostname, search: '', replace() {}}, confirm: () => false,
+            addEventListener: (...args) => windowEvents.addEventListener(...args)
+        },
+        history: {
+            pushState: (_state, _title, url) => {
+                context.window.location.search = new URL(url, 'http://localhost/html/').search;
+            },
+            replaceState: (_state, _title, url) => {
+                context.window.location.search = new URL(url, 'http://localhost/html/').search;
+            }
+        },
         localStorage: {getItem: key => storage.get(key) || null},
         sessionStorage: {
             getItem: key => storage.get(key) || null,
@@ -98,7 +118,7 @@ function browser(page = 'runs.html', hostname = 'localhost') {
             removeItem: key => storage.delete(key)
         },
         console: {error() {}},
-        AbortController, Date, URL, Blob, setTimeout, clearTimeout
+        AbortController, Date, URL, URLSearchParams, Blob, setTimeout, clearTimeout
     });
     const evaluate = filename => {
         const source = readFileSync(join(root, 'javascript', filename), 'utf8')
@@ -106,7 +126,7 @@ function browser(page = 'runs.html', hostname = 'localhost') {
         return vm.runInContext(source, context);
     };
     const get = id => { assert.ok(elements.has(id), 'Missing element: ' + id); return elements.get(id); };
-    return {context, storage, get, evaluate, elements, Element};
+    return {context, storage, get, evaluate, elements, Element, documentEvents, windowEvents};
 }
 
 const flush = () => new Promise(resolve => setImmediate(resolve));

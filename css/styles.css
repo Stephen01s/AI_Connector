@@ -606,6 +606,10 @@ footer span {
   cursor: not-allowed;
 }
 
+.analysis-trigger[hidden] {
+  display: none;
+}
+
 .run-detail-heading {
   display: flex;
   align-items: flex-start;

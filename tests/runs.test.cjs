@@ -24,7 +24,8 @@ async function runsBrowser() {
     };
     const opens = [];
     const updates = [];
-    const controls = {report: null, gates: new Map()};
+    const deletions = [];
+    const controls = {report: null, gates: new Map(), failMessages: false};
     Object.assign(app.context, {
         db: {}, usernameSessionKey: 'profile',
         doc: (_db, ...parts) => ({path: parts.join('/')}),
@@ -37,12 +38,16 @@ async function runsBrowser() {
             }
             const id = ref.path.split('/')[1];
             if (controls.gates.has(id)) await controls.gates.get(id);
+            if (controls.failMessages) throw new Error('Could not load messages');
             const values = rows[id];
-            return {empty: values.length === 0, forEach: callback =>
-                values.forEach(value => callback({data: () => value}))};
+            const docs = values.map((value, index) => ({
+                data: () => value, ref: {path: 'chats/' + id + '/messages/' + index}
+            }));
+            return {empty: values.length === 0, docs, forEach: callback =>
+                docs.forEach(callback)};
         },
         updateDoc: async (ref, data) => updates.push({ref, data}),
-        deleteDoc: async () => {}
+        deleteDoc: async ref => deletions.push(ref.path)
     });
     app.context.window.conversationAnalysis = {
         open: async input => {
@@ -53,7 +58,7 @@ async function runsBrowser() {
     app.evaluate('runs.js');
     await flush();
     return {
-        ...app, opens, updates, controls,
+        ...app, opens, updates, controls, deletions,
         select: index => app.get('runs-list').children[index].children[0].emit('click'),
         analyze: () => app.get('analyze-saved-run').emit('click')
     };
@@ -62,6 +67,7 @@ async function runsBrowser() {
 test('saved-run button analyzes the selected transcript using its saved Model A model', async () => {
     const app = await runsBrowser();
     assert.equal(app.get('analyze-saved-run').disabled, true);
+    assert.equal(app.get('analyze-saved-run').hidden, true);
     await app.select(0);
     assert.equal(app.get('run-detail-title').textContent, 'Garden');
     assert.equal(app.get('analyze-saved-run').hidden, false);
@@ -104,9 +110,44 @@ test('analysis saves onto the selected chat without saving credentials or adding
 test('empty saved runs cannot start an analysis', async () => {
     const app = await runsBrowser();
     await app.select(2);
+    assert.equal(app.get('analyze-saved-run').hidden, false);
     assert.equal(app.get('analyze-saved-run').disabled, true);
     await app.analyze();
     assert.equal(app.opens.length, 0);
+});
+
+test('Runs hides the button while loading or when message loading fails', async () => {
+    const app = await runsBrowser();
+    await app.select(0);
+    let release;
+    app.controls.gates.set('old-run', new Promise(resolve => { release = resolve; }));
+    const pending = app.select(1);
+    await flush();
+    assert.equal(app.get('analyze-saved-run').hidden, true);
+    await app.analyze();
+    assert.equal(app.opens.length, 0);
+    release();
+    await pending;
+    assert.equal(app.get('analyze-saved-run').hidden, false);
+    app.controls.failMessages = true;
+    await app.select(0);
+    assert.equal(app.get('analyze-saved-run').hidden, true);
+    await app.analyze();
+    assert.equal(app.opens.length, 0);
+});
+
+test('deleting the selected run hides the button and clears its analysis target', async () => {
+    const app = await runsBrowser();
+    await app.select(0);
+    app.context.window.confirm = () => true;
+    const card = app.get('runs-list').children[0];
+    await card.children[1].children[1].emit('click');
+    assert.ok(app.deletions.includes('chats/new-run'));
+    assert.equal(app.get('analyze-saved-run').hidden, true);
+    assert.equal(app.get('analyze-saved-run').disabled, true);
+    await app.analyze();
+    assert.equal(app.opens.length, 0);
+    assert.equal(app.context.document.querySelector('.run-detail-panel').classList.contains('has-selected-run'), false);
 });
 
 test('late message loads cannot overwrite a newly selected run', async () => {

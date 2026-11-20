@@ -81,9 +81,9 @@ manual deploy, upload a folder containing `_redirects` and the `html/`,
 `css/`, `javascript/`, `json/`, and `assets/` frontend folders.
 The homepage will then open at https://jashai.netlify.app/.
 
-The shared configuration in javascript/api-config.js selects
-http://localhost:8000 when a page is opened on localhost, 127.0.0.1, or IPv6
-loopback. Hosted pages call the FastAPI backend on Render. Netlify's static
+The shared configuration in javascript/api-config.js currently uses the hosted
+Render backend for both local and hosted frontend pages. To test a local Python
+backend instead, change apiUrl to http://localhost:8000. Netlify's static
 deployment does not start the Python server.
 
 ## Firebase sign-in and legacy profiles
@@ -131,8 +131,18 @@ require keys supplied through the dialog rather than using a shared server key.
 After a round finishes, click Analyze conversation beneath the human-message
 input. A separate modal opens and shows the observer's report. On the Runs
 page, select a saved run and use the Analyze conversation button beside its
-title to generate a report. When a current report exists, the button changes
-to View analysis.
+title to generate a report. Community conversations have the same button in
+their selected-conversation popup, including Preview conversations. On both
+pages the button stays hidden until a conversation has loaded; closing the
+Community popup or deleting the selected run hides it again. An empty selected
+conversation shows a disabled button. When a current report exists, the
+button changes to View analysis.
+
+Community can display a published report, or generate an analysis using the
+viewer's own provider session key. A viewer's new Community report is cached
+only on their open page and never overwrites the owner's published chat.
+If the conversation has no recorded model (including Preview examples), choose
+a model in the analysis modal before generating a report.
 
 The observer checks for sycophancy (unsupported agreement or flattery) and
 unexpected information instead of providing a general summary. It distinguishes
@@ -246,15 +256,15 @@ request, so very long conversations can increase API costs or reach a
 model's context limit.
 
 Deploy both the frontend and the updated Python backend for follow-ups to
-work on the hosted site. The shared API configuration uses the local Python
-server when the frontend is opened on localhost, and Render when hosted.
+work on the hosted site. The shared API configuration currently points to
+Render, including when the frontend is opened on localhost.
 
 ## Offline regression tests
 
 With the Python dependencies and Node.js installed, run from this folder:
 
     python -B -m unittest discover -s tests -p test_*.py -v
-    node --test tests/conversation.test.cjs tests/analysis.test.cjs tests/runs.test.cjs
+    node --test tests/conversation.test.cjs tests/analysis.test.cjs tests/runs.test.cjs tests/community.test.cjs
 
 These tests mock AI providers and Firebase; they do not make paid model calls
 or write to the hosted database.

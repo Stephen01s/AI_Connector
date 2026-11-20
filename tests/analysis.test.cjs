@@ -39,7 +39,7 @@ test('observer reuses only Model A key, sends a snapshot, and renders plain text
     const app = analysisBrowser();
     await app.open();
     assert.equal(app.requests.length, 1);
-    assert.equal(app.requests[0].url, 'http://localhost:8000/api/analyze');
+    assert.equal(app.requests[0].url, 'https://ai-connector-szkl.onrender.com/api/analyze');
     assert.equal(app.requests[0].payload.model_a_api_key, 'model-a-test-key');
     assert.equal(app.requests[0].payload.model_a_model, 'openai:gpt-4o');
     assert.equal(app.requests[0].payload.messages.length, 2);
@@ -186,11 +186,11 @@ test('save failure retains the generated report in the modal', async () => {
     assert.ok(app.get('analysis-status').textContent.includes('Could not save'));
 });
 
-test('API routing selects localhost only during local development', () => {
+test('the configured Render backend is preserved for local and hosted pages', () => {
     for (const [hostname, expected] of [
-        ['localhost', 'http://localhost:8000'],
-        ['127.0.0.1', 'http://localhost:8000'],
-        ['[::1]', 'http://localhost:8000'],
+        ['localhost', 'https://ai-connector-szkl.onrender.com'],
+        ['127.0.0.1', 'https://ai-connector-szkl.onrender.com'],
+        ['[::1]', 'https://ai-connector-szkl.onrender.com'],
         ['jashai.netlify.app', 'https://ai-connector-szkl.onrender.com']
     ]) {
         const app = browser('runs.html', hostname);

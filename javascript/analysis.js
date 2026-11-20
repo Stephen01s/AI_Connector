@@ -6,8 +6,8 @@
             <div><h2 id="analysis-title">Conversation analysis</h2><p id="analysis-context"></p></div>
             <button id="close-analysis" class="dialog-close" type="button" aria-label="Close analysis">&times;</button>
           </div>
-          <p class="analysis-notice">The observer uses Model A's model and session API key. Generating an analysis makes an additional, billable AI request. Observations are not definitive judgments about a model's nature.</p>
-          <label id="analysis-model-field" for="analysis-model" hidden>Original Model A model
+          <p class="analysis-notice">The observer uses Model A's model when recorded and your own session API key for that provider. Generating an analysis makes an additional, billable AI request. Observations are not definitive judgments about a model's nature.</p>
+          <label id="analysis-model-field" for="analysis-model" hidden>Model for analysis
             <select id="analysis-model" required></select>
           </label>
           <p id="analysis-status" role="status" aria-live="polite"></p>
@@ -43,7 +43,7 @@
 
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = 'Select the model originally used by Model A...';
+    placeholder.textContent = 'Select a model for analysis...';
     modelSelect.append(placeholder);
     for (const {model, label} of window.apiKeys.models) {
         const option = document.createElement('option');
@@ -63,7 +63,8 @@
     function describe() {
         const model = context.model || modelSelect.value;
         const label = window.apiKeys.models.find(item => item.model === model)?.label;
-        const notes = [label ? 'Model A: ' + label : "This older run did not save Model A's model."];
+        const notes = [label ? 'Analysis model: ' + label :
+            "Select a model to analyze this conversation using your own key."];
         if (context.promptIsComplete === false) {
             notes.push('The original prompt was not saved; its title is used, so goal assessment is limited.');
         }
@@ -179,7 +180,7 @@
         } else if (context.model && context.messages.length) {
             await generate();
         } else if (context.messages.length) {
-            status.textContent = "Select the original Model A model, then click Generate analysis.";
+            status.textContent = 'Select a model, then click Generate analysis.';
         }
     }
 

@@ -1,5 +1,6 @@
 
-import {collection, doc, getDoc, getDocs, limit, orderBy, query, where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';import { db } from './firebase.js';
+import {collection, doc, getDoc, getDocs, limit, orderBy, query, where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { db } from './firebase.js';
 import './account.js';
 
 const communityList = document.querySelector('#community-list');
@@ -10,9 +11,61 @@ const communityMessages = document.querySelector('#community-messages');
 const backButton = document.querySelector('#community-back');
 const realButton = document.querySelector('#community-real-btn');
 const demoButton = document.querySelector('#community-demo-btn');
+const analysisButton = document.querySelector('#analyze-community');
 
 let currentMode = 'real'; 
 let requestVersion = 0;
+let detailRequestVersion = 0;
+let selectedCommunityChat = null;
+let selectedCommunityMessages = [];
+const communityAnalysisCache = new Map();
+
+function clearCommunityAnalysis() {
+    ++detailRequestVersion;
+    selectedCommunityChat = null;
+    selectedCommunityMessages = [];
+    analysisButton.hidden = true;
+    analysisButton.disabled = true;
+    analysisButton.textContent = 'Analyze conversation';
+}
+
+function selectCommunityAnalysis(chat, messages) {
+    selectedCommunityChat = chat;
+    selectedCommunityMessages = messages.map(data => ({
+        name: data.agentId || 'Unknown participant',
+        role: data.role || 'assistant',
+        text: data.content || ''
+    }));
+    const cached = communityAnalysisCache.get(currentMode + ':' + chat.id);
+    if (cached?.message_count === selectedCommunityMessages.length) {
+        chat.analysis = cached;
+    }
+    analysisButton.hidden = false;
+    analysisButton.disabled = !selectedCommunityMessages.length;
+    analysisButton.textContent = chat.analysis?.message_count === selectedCommunityMessages.length &&
+        typeof chat.analysis.text === 'string' ? 'View analysis' : 'Analyze conversation';
+}
+
+analysisButton.addEventListener('click', async () => {
+    if (!selectedCommunityChat || !selectedCommunityMessages.length || analysisButton.disabled) return;
+    const chat = selectedCommunityChat;
+    const cacheKey = currentMode + ':' + chat.id;
+    await window.conversationAnalysis.open({
+        prompt: chat.prompt || chat.title || 'Original prompt unavailable.',
+        promptIsComplete: Boolean(chat.prompt),
+        mode: chat.mode ?? null,
+        model: chat.model_a_model || null,
+        messages: selectedCommunityMessages,
+        analysis: chat.analysis,
+        onResult: report => {
+            // Community is read-only: never write a viewer's report or key
+            // onto somebody else's published conversation.
+            communityAnalysisCache.set(cacheKey, report);
+            chat.analysis = report;
+            if (selectedCommunityChat === chat) analysisButton.textContent = 'View analysis';
+        }
+    });
+});
 
 const demoChats = [
     {
@@ -118,18 +171,19 @@ function setCommunityMode(mode) {
     updateModeButtons();
 
     closeCommunityPopup();
-    loadCommunity();
+    return loadCommunity();
 }
 
 realButton.addEventListener('click', () => {
-    setCommunityMode('real');
+    return setCommunityMode('real');
 });
 
 demoButton.addEventListener('click', () => {
-    setCommunityMode('demo');
+    return setCommunityMode('demo');
 });
 
 function closeCommunityPopup() {
+    clearCommunityAnalysis();
     history.replaceState(null, '', 'community.html');
 
     communityDetail.hidden = true;
@@ -147,13 +201,16 @@ communityDetail.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !communityDetail.hidden) {
+    const analysisOpen = document.querySelector('#analysis-dialog')?.open;
+    const keyEntryOpen = document.querySelector('#api-key-dialog')?.open;
+    if (event.key === 'Escape' && !communityDetail.hidden && !analysisOpen && !keyEntryOpen) {
         closeCommunityPopup();
     }
 });
 
 async function loadCommunity() {
     const version = ++requestVersion;
+    clearCommunityAnalysis();
 
     const chatId = new URLSearchParams(
         window.location.search
@@ -295,7 +352,7 @@ function createCommunityCard(chat) {
             `community.html?chat=${encodeURIComponent(chat.id)}`
         );
 
-        showPublicChat(chat.id);
+        return showPublicChat(chat.id);
     });
 
     footer.append(date, viewButton);
@@ -364,8 +421,12 @@ async function loadMessagePreview(chatId, previewElement, version) {
 }
 
 async function showPublicChat(chatId) {
+    clearCommunityAnalysis();
+    const detailVersion = detailRequestVersion;
     const version = requestVersion;
     const mode = currentMode;
+    const isCurrent = () => version === requestVersion &&
+        detailVersion === detailRequestVersion && mode === currentMode && !communityDetail.hidden;
 
     communityList.hidden = false;
     communityDetail.hidden = false;
@@ -392,7 +453,7 @@ async function showPublicChat(chatId) {
         const chatRef = doc(db, 'chats', chatId);
         const chatSnapshot = await getDoc(chatRef);
 
-        if (version !== requestVersion || communityDetail.hidden) {
+        if (!isCurrent()) {
             return;
         }
 
@@ -405,7 +466,7 @@ async function showPublicChat(chatId) {
             );
         }
 
-        const chat = chatSnapshot.data();
+        const chat = {...chatSnapshot.data(), id: chatId};
 
         detailTitle.textContent = chat.title || 'Untitled Conversation';
         detailAuthor.textContent =
@@ -418,21 +479,26 @@ async function showPublicChat(chatId) {
             )
         );
 
-        if (version !== requestVersion || communityDetail.hidden) {
+        if (!isCurrent()) {
             return;
         }
 
         if (messages.empty) {
+            selectCommunityAnalysis(chat, []);
             showDetailMessage('No messages available.');
             return;
         }
 
+        const transcript = [];
         messages.forEach(message => {
-            createMessageRow(message.data());
+            const data = message.data();
+            transcript.push(data);
+            createMessageRow(data);
         });
+        selectCommunityAnalysis(chat, transcript);
 
     } catch (error) {
-        if (version !== requestVersion || communityDetail.hidden) {
+        if (!isCurrent()) {
             return;
         }
 
@@ -458,6 +524,7 @@ function displayDemoChat(chat) {
     chat.messages.forEach(message => {
         createMessageRow(message);
     });
+    selectCommunityAnalysis(chat, chat.messages);
 }
 
 function createMessageRow(data) {
