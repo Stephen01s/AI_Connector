@@ -563,11 +563,10 @@ async function showPublicChat(chatId) {
             return;
         }
 
+        const transcript = [];
         if (messages.empty) {
-            selectCommunityAnalysis(chat, []);
             showDetailMessage('No messages available.');
         } else {
-            const transcript = [];
             messages.forEach(message => {
                 const data = message.data();
                 transcript.push(data);
@@ -575,8 +574,8 @@ async function showPublicChat(chatId) {
             });
         }
 
-        await loadComments(chatId);
         selectCommunityAnalysis(chat, transcript);
+        await loadComments(chatId);
 
     } catch (error) {
         if (!isCurrent()) {
