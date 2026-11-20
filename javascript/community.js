@@ -1,6 +1,19 @@
 
-import {collection, doc, getDoc, getDocs, limit, orderBy, query, where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { db } from './firebase.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
+    where
+} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+import { auth, db, usernameSessionKey } from './firebase.js';
 import './account.js';
 
 const communityList = document.querySelector('#community-list');
@@ -11,10 +24,18 @@ const communityMessages = document.querySelector('#community-messages');
 const backButton = document.querySelector('#community-back');
 const realButton = document.querySelector('#community-real-btn');
 const demoButton = document.querySelector('#community-demo-btn');
+const commentsSection = document.querySelector('#community-comments');
+const commentList = document.querySelector('#community-comment-list');
+const commentForm = document.querySelector('#community-comment-form');
+const commentInput = document.querySelector('#community-comment-input');
+const commentStatus = document.querySelector('#community-comment-status');
 const analysisButton = document.querySelector('#analyze-community');
 
 let currentMode = 'real'; 
 let requestVersion = 0;
+let activeCommentPostId = null;
+
+onAuthStateChanged(auth, updateCommentForm);
 let detailRequestVersion = 0;
 let selectedCommunityChat = null;
 let selectedCommunityMessages = [];
@@ -193,6 +214,58 @@ function closeCommunityPopup() {
 }
 
 backButton.addEventListener('click', closeCommunityPopup);
+
+commentForm.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const comment = commentInput.value.trim();
+    const user = auth.currentUser;
+    const postId = activeCommentPostId;
+
+    if (!comment) return;
+    if (!user) {
+        commentStatus.textContent = 'Sign in to post a comment.';
+        return;
+    }
+    if (!postId || currentMode !== 'real') return;
+
+    const commentRef = doc(collection(db, 'comments'));
+    const submitButton = commentForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    commentStatus.textContent = 'Posting comment…';
+
+    try {
+        const profileId = localStorage.getItem(usernameSessionKey);
+        let username = user.displayName || 'Anonymous';
+
+        if (profileId) {
+            const profile = await getDoc(doc(db, 'users', profileId));
+            if (profile.exists() && profile.data().username) {
+                username = profile.data().username;
+            }
+        }
+
+        await setDoc(commentRef, {
+            comment,
+            postId,
+            commentId: commentRef.id,
+            userId: user.uid,
+            username,
+            createdAt: serverTimestamp()
+        });
+
+        commentInput.value = '';
+        commentStatus.textContent = 'Comment posted.';
+        await loadComments(postId);
+    } catch (error) {
+        console.error('Could not post comment:', error);
+        commentStatus.textContent = error.code === 'permission-denied'
+            ? 'You do not have permission to comment on this conversation.'
+            : 'Could not post your comment. Please try again.';
+    } finally {
+        submitButton.disabled = !auth.currentUser;
+    }
+});
 
 communityDetail.addEventListener('click', event => {
     if (event.target === communityDetail) {
@@ -435,6 +508,10 @@ async function showPublicChat(chatId) {
     detailTitle.textContent = 'Loading conversation…';
     detailAuthor.textContent = '';
     communityMessages.replaceChildren();
+    activeCommentPostId = null;
+    commentsSection.hidden = true;
+    commentList.replaceChildren();
+    commentStatus.textContent = '';
 
     if (mode === 'demo') {
         const demoChat = demoChats.find(chat => chat.id === chatId);
@@ -467,6 +544,9 @@ async function showPublicChat(chatId) {
         }
 
         const chat = {...chatSnapshot.data(), id: chatId};
+        activeCommentPostId = chatId;
+        commentsSection.hidden = false;
+        updateCommentForm();
 
         detailTitle.textContent = chat.title || 'Untitled Conversation';
         detailAuthor.textContent =
@@ -486,15 +566,16 @@ async function showPublicChat(chatId) {
         if (messages.empty) {
             selectCommunityAnalysis(chat, []);
             showDetailMessage('No messages available.');
-            return;
+        } else {
+            const transcript = [];
+            messages.forEach(message => {
+                const data = message.data();
+                transcript.push(data);
+                createMessageRow(data);
+            });
         }
 
-        const transcript = [];
-        messages.forEach(message => {
-            const data = message.data();
-            transcript.push(data);
-            createMessageRow(data);
-        });
+        await loadComments(chatId);
         selectCommunityAnalysis(chat, transcript);
 
     } catch (error) {
@@ -515,9 +596,66 @@ async function showPublicChat(chatId) {
     }
 }
 
+function updateCommentForm() {
+    const signedIn = Boolean(auth.currentUser);
+    commentInput.disabled = !signedIn;
+    commentForm.querySelector('button[type="submit"]').disabled = !signedIn;
+    commentInput.placeholder = signedIn
+        ? 'Write a comment…'
+        : 'Sign in to join the conversation';
+}
+
+async function loadComments(postId) {
+    commentList.replaceChildren();
+
+    try {
+        const snapshot = await getDocs(query(
+            collection(db, 'comments'),
+            where('postId', '==', postId)
+        ));
+
+        if (activeCommentPostId !== postId) return;
+        if (snapshot.empty) {
+            const empty = document.createElement('p');
+            empty.textContent = 'No comments yet.';
+            commentList.append(empty);
+            return;
+        }
+
+        snapshot.docs
+            .sort((a, b) => timestampMillis(a.data().createdAt) - timestampMillis(b.data().createdAt))
+            .forEach(item => {
+                const data = item.data();
+                const card = document.createElement('article');
+                card.className = 'community-comment';
+
+                const author = document.createElement('strong');
+                author.textContent = data.username || 'Anonymous';
+
+                const body = document.createElement('p');
+                body.textContent = data.comment || '';
+
+                const time = document.createElement('time');
+                time.textContent = formatTimestamp(data.createdAt);
+
+                card.append(author, body, time);
+                commentList.append(card);
+            });
+    } catch (error) {
+        console.error('Could not load comments:', error);
+        if (activeCommentPostId === postId) {
+            const message = document.createElement('p');
+            message.textContent = 'Comments could not be loaded.';
+            commentList.append(message);
+        }
+    }
+}
+
 function displayDemoChat(chat) {
     detailTitle.textContent = chat.title;
     detailAuthor.textContent = `Shared by ${chat.username}`;
+    activeCommentPostId = null;
+    commentsSection.hidden = true;
 
     communityMessages.replaceChildren();
 

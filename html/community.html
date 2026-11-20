@@ -47,6 +47,16 @@
                 </div>
                 <p id = "community-detail-author"></p>
                 <div id = "community-messages"></div>
+                <section id="community-comments" aria-labelledby="community-comments-title" hidden>
+                    <h3 id="community-comments-title">Comments</h3>
+                    <div id="community-comment-list" aria-live="polite"></div>
+                    <form id="community-comment-form">
+                        <label for="community-comment-input">Add a comment</label>
+                        <textarea id="community-comment-input" rows="3" maxlength="2000" required></textarea>
+                        <button type="submit">Post comment</button>
+                        <p id="community-comment-status" role="status"></p>
+                    </form>
+                </section>
             </div>
         </section>
     </div>
