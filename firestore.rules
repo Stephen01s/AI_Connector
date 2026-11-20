@@ -70,13 +70,14 @@ service cloud.firestore {
 
       allow create: if ownsChat(request.resource.data) &&
         request.resource.data.keys().hasOnly([
-          'userId', 'username', 'title', 'preview', 'mode', 'createdAt', 'updatedAt', 'isPublic'
+          'userId', 'username', 'title', 'preview', 'mode', 'prompt', 'model_a_model',
+          'createdAt', 'updatedAt', 'isPublic'
         ]);
 
       allow update: if ownsChat(resource.data) &&
         request.resource.data.userId == resource.data.userId &&
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['title', 'preview', 'updatedAt', 'isPublic']);
+          .hasOnly(['title', 'preview', 'updatedAt', 'isPublic', 'analysis', 'model_a_model']);
 
       allow delete: if ownsChat(resource.data);
 
@@ -95,6 +96,35 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if ownsChatById(chatId);
       }
+    }
+
+    match /comments/{commentId} {
+      function commentPostIsPublic(postId) {
+        let chatPath = /databases/$(database)/documents/chats/$(postId);
+        return postId is string && exists(chatPath) &&
+          get(chatPath).data.isPublic == true;
+      }
+
+      // A conversation shown in Community has isPublic == true, so its
+      // comments are readable by everyone and writable by signed-in users.
+      allow get, list: if commentPostIsPublic(resource.data.postId);
+      allow create: if signedIn() &&
+        request.resource.data.keys().hasOnly([
+          'comment', 'postId', 'commentId', 'userId', 'username', 'createdAt'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'comment', 'postId', 'commentId', 'userId', 'username', 'createdAt'
+        ]) &&
+        request.resource.data.comment is string &&
+        request.resource.data.comment.size() > 0 &&
+        request.resource.data.comment.size() <= 2000 &&
+        request.resource.data.postId is string &&
+        request.resource.data.commentId == commentId &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.username is string &&
+        request.resource.data.createdAt == request.time &&
+        commentPostIsPublic(request.resource.data.postId);
+      allow update, delete: if false;
     }
   }
 }
