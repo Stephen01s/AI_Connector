@@ -483,6 +483,12 @@ async function selectRun(chat) {
     } catch (error) {
         if (version !== selectionVersion) return;
         clearAnalysisSelection();
+        // A failed load must not leave the detail panel looking selected.
+        detailPanel.classList.remove('has-selected-run');
+        runsList.querySelectorAll('.run-list-card').forEach(button =>
+            button.classList.remove('selected')
+        );
+        detailTitle.textContent = 'Select a chat';
         emptyTitle.textContent = 'Conversation unavailable';
         emptyDescription.textContent = 'Could not load this conversation. Please try again.';
         detailEmpty.hidden = false;
