@@ -78,6 +78,86 @@ document.querySelectorAll('[data-page]').forEach(button => {
     });
 });
 
+// Custom confirmation dialog for sharing, unsharing, and deleting
+function confirmRunAction({ title, message, confirmText, icon, danger = false }) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'run-confirm-overlay';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'run-confirm-dialog';
+        dialog.setAttribute('role', 'alertdialog');
+        dialog.setAttribute('aria-modal', 'true');
+
+        const heading = document.createElement('div');
+        heading.className = 'run-confirm-heading';
+        heading.innerHTML = icon;
+
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = title;
+        heading.append(titleElement);
+
+        const description = document.createElement('p');
+        description.className = 'run-confirm-message';
+        description.textContent = message;
+
+        const actions = document.createElement('div');
+        actions.className = 'run-confirm-actions';
+
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.className = 'run-confirm-cancel';
+        cancelButton.textContent = 'Cancel';
+
+        const confirmButton = document.createElement('button');
+        confirmButton.type = 'button';
+        confirmButton.className = danger
+            ? 'run-confirm-submit is-danger'
+            : 'run-confirm-submit';
+        confirmButton.textContent = confirmText;
+
+        actions.append(cancelButton, confirmButton);
+        dialog.append(heading, description, actions);
+        overlay.append(dialog);
+
+        const previousFocus = document.activeElement;
+
+        function close(confirmed) {
+            document.removeEventListener('keydown', onKeyDown);
+            overlay.remove();
+            previousFocus?.focus?.();
+            resolve(confirmed);
+        }
+
+        function onKeyDown(event) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                close(false);
+            } else if (event.key === 'Tab') {
+                const focusable = [cancelButton, confirmButton];
+                const currentIndex = focusable.indexOf(document.activeElement);
+                if (event.shiftKey && currentIndex === 0) {
+                    event.preventDefault();
+                    confirmButton.focus();
+                } else if (!event.shiftKey && currentIndex === focusable.length - 1) {
+                    event.preventDefault();
+                    cancelButton.focus();
+                }
+            }
+        }
+
+        cancelButton.addEventListener('click', () => close(false));
+        confirmButton.addEventListener('click', () => close(true));
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) close(false);
+        });
+
+        document.body.append(overlay);
+        document.addEventListener('keydown', onKeyDown);
+        cancelButton.focus();
+    });
+}
+
 // Load saved conversations
 if (!profileId) {
     window.location.replace('sign-in.html');
@@ -150,7 +230,15 @@ async function loadRuns() {
             chat.updatedAt || chat.createdAt
         );
 
-        button.append(title, date);
+        // Current visibility, displayed beside the conversation date
+        const metadata = document.createElement('div');
+        metadata.className = 'run-card-metadata';
+
+        const visibilityStatus = document.createElement('span');
+        visibilityStatus.className = 'run-visibility-status';
+
+        metadata.append(date, visibilityStatus);
+        button.append(title, metadata);
 
         button.addEventListener('click', () => {
             return selectRun(chat).catch(error => {
@@ -175,28 +263,61 @@ async function loadRuns() {
         visibilityButton.className =
             'run-card-action visibility-toggle';
 
-        visibilityButton.setAttribute(
-            'aria-label',
-            chat.isPublic === true
-                ? 'Make chat private'
-                : 'Make chat public'
-        );
+        // Keep the visibility button and status label in sync
+        function updateVisibilityDisplay() {
+            const isPublic = chat.isPublic === true;
+            const label = isPublic ? 'Public' : 'Private';
+            const icon = isPublic ? globeIcon() : lockIcon();
 
-        visibilityButton.setAttribute(
-            'aria-pressed',
-            String(chat.isPublic === true)
-        );
+            visibilityStatus.innerHTML =
+                `${icon}<span>${label}</span>`;
 
-        visibilityButton.title =
-            chat.isPublic === true ? 'Public' : 'Private';
+            visibilityStatus.classList.toggle(
+                'is-public',
+                isPublic
+            );
 
-        visibilityButton.innerHTML =
-            chat.isPublic === true ? eyeIcon() : eyeOffIcon();
+            visibilityButton.innerHTML = isPublic
+                ? `${lockIcon()}<span>Make Private</span>`
+                : `${globeIcon()}<span>Make Public</span>`;
+
+            visibilityButton.setAttribute(
+                'aria-label',
+                isPublic
+                    ? 'Make conversation private'
+                    : 'Make conversation public'
+            );
+
+            visibilityButton.setAttribute(
+                'aria-pressed',
+                String(isPublic)
+            );
+
+            visibilityButton.title = isPublic
+                ? 'Remove this conversation from Community'
+                : 'Share this conversation to Community';
+        }
+
+        updateVisibilityDisplay();
 
         visibilityButton.addEventListener('click', async event => {
             event.stopPropagation();
 
             const isPublic = chat.isPublic !== true;
+
+            const confirmed = await confirmRunAction({
+                title: isPublic
+                    ? 'Share conversation to Community?'
+                    : 'Make this conversation private?',
+                message: isPublic
+                    ? 'Other users will be able to view this conversation on the Community page.'
+                    : 'This conversation will be removed from Community but will remain saved in Your Runs.',
+                confirmText: isPublic ? 'Make Public' : 'Make Private',
+                icon: isPublic ? globeIcon() : lockIcon()
+            });
+
+            if (!confirmed) return;
+
             visibilityButton.disabled = true;
 
             try {
@@ -207,23 +328,7 @@ async function loadRuns() {
 
                 chat.isPublic = isPublic;
 
-                visibilityButton.setAttribute(
-                    'aria-label',
-                    isPublic
-                        ? 'Make chat private'
-                        : 'Make chat public'
-                );
-
-                visibilityButton.setAttribute(
-                    'aria-pressed',
-                    String(isPublic)
-                );
-
-                visibilityButton.title =
-                    isPublic ? 'Public' : 'Private';
-
-                visibilityButton.innerHTML =
-                    isPublic ? eyeIcon() : eyeOffIcon();
+                updateVisibilityDisplay();
 
                 status.textContent = isPublic
                     ? 'Chat is now public.'
@@ -255,16 +360,20 @@ async function loadRuns() {
         );
 
         deleteButton.title = 'Delete chat';
-        deleteButton.textContent = 'x';
+        deleteButton.innerHTML = `${trashIcon()}<span>Delete</span>`;
 
         deleteButton.addEventListener('click', async event => {
             event.stopPropagation();
 
-            if (!window.confirm(
-                'Are you sure you want to delete this chat? this action cannot be undone.'
-            )) {
-                return;
-            }
+            const confirmed = await confirmRunAction({
+                title: 'Delete this conversation?',
+                message: 'This will permanently delete the saved conversation and its messages. This action cannot be undone.',
+                confirmText: 'Delete Conversation',
+                icon: trashIcon(),
+                danger: true
+            });
+
+            if (!confirmed) return;
 
             deleteButton.disabled = true;
 
@@ -458,13 +567,17 @@ async function selectRun(chat) {
     }
 }
 
-// Icons for the public/private button
-function eyeIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+// Icons for conversation visibility and deletion
+function globeIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-5 5-5 13 0 18M12 3c5 5 5 13 0 18"/></svg>';
 }
 
-function eyeOffIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-3.2 3.9M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.4 0 2.6-.3 3.7-.8"/></svg>';
+function lockIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+}
+
+function trashIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>';
 }
 
 // Convert Firebase timestamps into milliseconds

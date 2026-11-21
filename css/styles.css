@@ -756,6 +756,169 @@ footer span {
   color: #4d5460;
 }
 
+
+/* Runs page confirmation dialogs */
+.run-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 15, 25, 0.50);
+}
+
+.run-confirm-dialog {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  border: 1px solid #d7e0ee;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #151922;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.run-confirm-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.run-confirm-heading h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.run-confirm-heading svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: #536687;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.run-confirm-message {
+  margin: 0 0 24px;
+  color: #526078;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.run-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.run-confirm-actions button {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.run-confirm-cancel {
+  border: 1px solid #d7e0ee;
+  background: #ffffff;
+  color: #304d7d;
+}
+
+.run-confirm-cancel:hover {
+  background: #f1f4f9;
+}
+
+.run-confirm-submit {
+  border: 1px solid #536687;
+  background: #536687;
+  color: #ffffff;
+}
+
+.run-confirm-submit:hover {
+  background: #405474;
+}
+
+.run-confirm-submit.is-danger {
+  border-color: #b33c43;
+  background: #b33c43;
+  color: #ffffff;
+}
+
+.run-confirm-submit.is-danger:hover {
+  background: #922d34;
+}
+
+.run-confirm-actions button:focus-visible {
+  outline: 2px solid #718bb8;
+  outline-offset: 2px;
+}
+
+
+/* Dark mode */
+.dark-mode .run-confirm-dialog {
+  border-color: #3a485d;
+  background: #252e3c;
+  color: #f1f5ff;
+}
+
+.dark-mode .run-confirm-heading svg {
+  stroke: #a9bde0;
+}
+
+.dark-mode .run-confirm-message {
+  color: #c0ccdf;
+}
+
+.dark-mode .run-confirm-cancel {
+  border: 1px solid #485b77;
+  background: #292f3a;
+  color: #e0e9f9;
+}
+
+.dark-mode .run-confirm-cancel:hover {
+  border-color: #596b87;
+  background: #353d4b;
+}
+
+.dark-mode .run-confirm-submit {
+  border: 1px solid #718bb8;
+  background: #405b86;
+  color: #ffffff;
+}
+
+.dark-mode .run-confirm-submit:hover {
+  border-color: #8ca7d4;
+  background: #536f9b;
+}
+
+.dark-mode .run-confirm-submit.is-danger {
+  border: 1px solid #e06b74;
+  background: #a63842;
+  color: #ffffff;
+}
+
+.dark-mode .run-confirm-submit.is-danger:hover {
+  border-color: #f08089;
+  background: #bc4651;
+}
+
+.dark-mode .run-confirm-submit.is-danger:focus-visible {
+  outline: 2px solid #e06b74;
+  outline-offset: 2px;
+}
+
 .data-preview {
   margin-top: 18px;
   padding-top: 14px;
@@ -927,39 +1090,41 @@ footer span {
 }
 
 .run-card-wrap {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d7e0ee;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.run-card-wrap:has(.run-list-card.selected) {
+  border-color: #718bb8;
+  background: #f3f6fc;
 }
 
 .run-list-card {
   display: grid;
   width: 100%;
   gap: 5px;
-  padding: 12px;
+  margin: 0;
+  padding: 12px 13px;
   text-align: left;
-  border: 1px solid #d7e0ee;
-  border-radius: 8px;
-  background: #fff;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: #263b5c;
-  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
-  padding-right: 72px;
-}
-
-.run-list-card:hover,
-.run-list-card.selected {
-  border-color: #7184a6;
-  background: #f5f7fb;
+  box-shadow: none;
+  transition: background .2s ease;
 }
 
 .run-list-card:hover {
   background: #f8faff;
-  border-color: #a8b9d5;
-  box-shadow: 0 2px 8px rgba(29, 50, 85, .06);
 }
 
 .run-list-card.selected,
 .run-list-card.selected:hover {
   background: #f3f6fc;
-  border-color: #7184a6;
 }
 
 .run-list-card strong {
@@ -979,34 +1144,71 @@ footer span {
   margin-top: 5px;
 }
 
-.run-card-actions {
-  position: absolute;
-  top: 6px;
-  right: 6px;
+.run-card-metadata {
   display: flex;
-  align-items: flex-start;
-  gap: 3px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.run-card-wrap:hover .run-card-actions,
-.run-card-wrap:focus-within .run-card-actions {
-  opacity: 1;
-  pointer-events: auto;
+.run-card-metadata small {
+  margin-top: 0;
+}
+
+.run-visibility-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: #eef1f6;
+  color: #59677b;
+  font-size: 10px;
+}
+
+.run-visibility-status.is-public {
+  background: #e8f1ff;
+  color: #315b91;
+}
+
+.run-visibility-status svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.run-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 6px 12px;
+  border-top: 1px solid #e4eaf3;
+  background: #fafbfe;
 }
 
 .run-card-action {
-  display: grid;
-  min-width: 22px;
-  height: 22px;
-  place-items: center;
-  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  min-width: 0;
+  height: 30px;
+  margin: 0;
+  padding: 5px 10px;
   border: 1px solid #dfe3e9;
   border-radius: 3px;
   background: #fff;
   color: #4d5664;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .run-card-action:hover {
@@ -1025,8 +1227,9 @@ footer span {
 
 .run-card-action.delete-chat {
   color: #a33e3e;
-  font-size: 19px;
+  font-size: 10px;
   line-height: 1;
+  border-color: #e6c5c5;
 }
 
 .run-card-action:disabled {
@@ -1034,11 +1237,12 @@ footer span {
   opacity: .6;
 }
 
-@media (hover: none) {
-  .run-card-actions {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.run-card-action.delete-chat:hover {
+  background: #fff0f0;
+}
+
+.run-card-action.visibility-toggle:hover {
+  background: #edf3ff;
 }
 
 .run-detail-empty {
@@ -1982,15 +2186,54 @@ body .nav-links {
 
 
 /* Runs: selected and hovered chat cards in dark mode */
+.dark-mode .run-card-wrap {
+  background: #202936;
+  border-color: #3a485d;
+}
+
+.dark-mode .run-card-wrap:has(.run-list-card.selected) {
+  background: #29374b;
+  border-color: #718bb8;
+}
+
+.dark-mode .run-list-card {
+  background: transparent;
+  border: none;
+}
+
 .dark-mode .run-list-card:hover {
   background: #2c3442;
-  border-color: #596b86;
 }
 
 .dark-mode .run-list-card.selected,
 .dark-mode .run-list-card.selected:hover {
   background: #303b4d;
-  border-color: #7895ce;
+}
+
+.dark-mode .run-card-actions {
+  background: #1b2431;
+  border-top-color: #3a485d;
+}
+
+.dark-mode .run-visibility-status {
+  background: #354052;
+  color: #c0cad9;
+}
+
+.dark-mode .run-visibility-status.is-public {
+  background: #2c4666;
+  color: #c8ddff;
+}
+
+.dark-mode .run-card-action {
+  background: #293446;
+  color: #d1dded;
+  border-color: #526077;
+}
+
+.dark-mode .run-card-action.delete-chat {
+  color: #ffb2b2;
+  border-color: #84565b;
 }
 
 /* Runs: centered empty conversation state */
