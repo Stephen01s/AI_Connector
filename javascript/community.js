@@ -1,5 +1,5 @@
-
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+
 import {
     collection,
     doc,
@@ -20,6 +20,7 @@ const communityList = document.querySelector('#community-list');
 const communityDetail = document.querySelector('#community-detail');
 const detailTitle = document.querySelector('#community-detail-title');
 const detailAuthor = document.querySelector('#community-detail-author');
+const detailDate = document.querySelector('#community-detail-date');
 const communityMessages = document.querySelector('#community-messages');
 const backButton = document.querySelector('#community-back');
 const realButton = document.querySelector('#community-real-btn');
@@ -30,47 +31,83 @@ const commentForm = document.querySelector('#community-comment-form');
 const commentInput = document.querySelector('#community-comment-input');
 const commentStatus = document.querySelector('#community-comment-status');
 const analysisButton = document.querySelector('#analyze-community');
+const analysisButtonLabel = analysisButton.querySelector('.analysis-trigger-label');
 
-let currentMode = 'real'; 
+let currentMode = 'real';
 let requestVersion = 0;
 let activeCommentPostId = null;
 
 onAuthStateChanged(auth, updateCommentForm);
+
 let detailRequestVersion = 0;
 let selectedCommunityChat = null;
 let selectedCommunityMessages = [];
+
+const communityModelNames = new Map();
 const communityAnalysisCache = new Map();
+
+
+function setAnalysisButtonLabel(label) {
+    analysisButtonLabel.textContent = label;
+}
 
 function clearCommunityAnalysis() {
     ++detailRequestVersion;
+
     selectedCommunityChat = null;
     selectedCommunityMessages = [];
+
+    communityModelNames.clear();
+
     analysisButton.hidden = true;
     analysisButton.disabled = true;
-    analysisButton.textContent = 'Analyze conversation';
+
+    setAnalysisButtonLabel('Analyze conversation');
 }
 
 function selectCommunityAnalysis(chat, messages) {
     selectedCommunityChat = chat;
+
     selectedCommunityMessages = messages.map(data => ({
         name: data.agentId || 'Unknown participant',
         role: data.role || 'assistant',
         text: data.content || ''
     }));
-    const cached = communityAnalysisCache.get(currentMode + ':' + chat.id);
-    if (cached?.message_count === selectedCommunityMessages.length) {
+
+    const cached = communityAnalysisCache.get(
+        currentMode + ':' + chat.id
+    );
+
+    if (
+        cached?.message_count === selectedCommunityMessages.length
+    ) {
         chat.analysis = cached;
     }
+
     analysisButton.hidden = false;
     analysisButton.disabled = !selectedCommunityMessages.length;
-    analysisButton.textContent = chat.analysis?.message_count === selectedCommunityMessages.length &&
-        typeof chat.analysis.text === 'string' ? 'View analysis' : 'Analyze conversation';
+
+    const hasAnalysis =
+        chat.analysis?.message_count === selectedCommunityMessages.length &&
+        typeof chat.analysis?.text === 'string';
+
+    setAnalysisButtonLabel(
+        hasAnalysis ? 'View Analysis' : 'Analyze conversation'
+    );
 }
 
 analysisButton.addEventListener('click', async () => {
-    if (!selectedCommunityChat || !selectedCommunityMessages.length || analysisButton.disabled) return;
+    if (
+        !selectedCommunityChat ||
+        !selectedCommunityMessages.length ||
+        analysisButton.disabled
+    ) {
+        return;
+    }
+
     const chat = selectedCommunityChat;
     const cacheKey = currentMode + ':' + chat.id;
+
     await window.conversationAnalysis.open({
         prompt: chat.prompt || chat.title || 'Original prompt unavailable.',
         promptIsComplete: Boolean(chat.prompt),
@@ -78,12 +115,19 @@ analysisButton.addEventListener('click', async () => {
         model: chat.model_a_model || null,
         messages: selectedCommunityMessages,
         analysis: chat.analysis,
+
         onResult: report => {
-            // Community is read-only: never write a viewer's report or key
+            // Community is read-only.
+            // Never write a viewer's report or API key
             // onto somebody else's published conversation.
+
             communityAnalysisCache.set(cacheKey, report);
+
             chat.analysis = report;
-            if (selectedCommunityChat === chat) analysisButton.textContent = 'View analysis';
+
+            if (selectedCommunityChat === chat) {
+                setAnalysisButtonLabel('View Analysis');
+            }
         }
     });
 });
@@ -94,6 +138,7 @@ const demoChats = [
         title: 'Could Humans Live on Mars?',
         username: 'SkyExplorer',
         createdAt: new Date('2026-10-26T14:30:00'),
+
         messages: [
             {
                 agentId: 'Model A',
@@ -115,11 +160,13 @@ const demoChats = [
             }
         ]
     },
+
     {
         id: 'demo-ocean',
         title: 'How Can We Protect Ocean Wildlife?',
         username: 'BlueCurrent',
         createdAt: new Date('2026-10-24T10:00:00'),
+
         messages: [
             {
                 agentId: 'Model A',
@@ -141,11 +188,13 @@ const demoChats = [
             }
         ]
     },
+
     {
         id: 'demo-programming',
         title: 'Best Ways to Learn Programming',
         username: 'CodeBuilder',
         createdAt: new Date('2026-10-22T16:15:00'),
+
         messages: [
             {
                 agentId: 'Model A',
@@ -170,7 +219,9 @@ const demoChats = [
 ];
 
 document.querySelectorAll('[data-page]').forEach(button => {
-    button.addEventListener('click', () => {window.location.href = button.dataset.page;});
+    button.addEventListener('click', () => {
+        window.location.href = button.dataset.page;
+    });
 });
 
 function updateModeButtons() {
@@ -189,9 +240,11 @@ function setCommunityMode(mode) {
     }
 
     currentMode = mode;
+
     updateModeButtons();
 
     closeCommunityPopup();
+
     return loadCommunity();
 }
 
@@ -205,6 +258,7 @@ demoButton.addEventListener('click', () => {
 
 function closeCommunityPopup() {
     clearCommunityAnalysis();
+
     history.replaceState(null, '', 'community.html');
 
     communityDetail.hidden = true;
@@ -223,23 +277,34 @@ commentForm.addEventListener('submit', async event => {
     const postId = activeCommentPostId;
 
     if (!comment) return;
+
     if (!user) {
         commentStatus.textContent = 'Sign in to post a comment.';
         return;
     }
+
     if (!postId || currentMode !== 'real') return;
 
     const commentRef = doc(collection(db, 'comments'));
-    const submitButton = commentForm.querySelector('button[type="submit"]');
+
+    const submitButton = commentForm.querySelector(
+        'button[type="submit"]'
+    );
+
     submitButton.disabled = true;
+
     commentStatus.textContent = 'Posting comment…';
 
     try {
         const profileId = localStorage.getItem(usernameSessionKey);
+
         let username = user.displayName || 'Anonymous';
 
         if (profileId) {
-            const profile = await getDoc(doc(db, 'users', profileId));
+            const profile = await getDoc(
+                doc(db, 'users', profileId)
+            );
+
             if (profile.exists() && profile.data().username) {
                 username = profile.data().username;
             }
@@ -255,13 +320,19 @@ commentForm.addEventListener('submit', async event => {
         });
 
         commentInput.value = '';
+
         commentStatus.textContent = 'Comment posted.';
+
         await loadComments(postId);
+
     } catch (error) {
         console.error('Could not post comment:', error);
-        commentStatus.textContent = error.code === 'permission-denied'
-            ? 'You do not have permission to comment on this conversation.'
-            : 'Could not post your comment. Please try again.';
+
+        commentStatus.textContent =
+            error.code === 'permission-denied'
+                ? 'You do not have permission to comment on this conversation.'
+                : 'Could not post your comment. Please try again.';
+
     } finally {
         submitButton.disabled = !auth.currentUser;
     }
@@ -274,15 +345,25 @@ communityDetail.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
-    const analysisOpen = document.querySelector('#analysis-dialog')?.open;
-    const keyEntryOpen = document.querySelector('#api-key-dialog')?.open;
-    if (event.key === 'Escape' && !communityDetail.hidden && !analysisOpen && !keyEntryOpen) {
+    const analysisOpen =
+        document.querySelector('#analysis-dialog')?.open;
+
+    const keyEntryOpen =
+        document.querySelector('#api-key-dialog')?.open;
+
+    if (
+        event.key === 'Escape' &&
+        !communityDetail.hidden &&
+        !analysisOpen &&
+        !keyEntryOpen
+    ) {
         closeCommunityPopup();
     }
 });
 
 async function loadCommunity() {
     const version = ++requestVersion;
+
     clearCommunityAnalysis();
 
     const chatId = new URLSearchParams(
@@ -291,6 +372,7 @@ async function loadCommunity() {
 
     communityDetail.hidden = true;
     communityList.hidden = false;
+
     document.body.style.overflow = '';
 
     communityList.replaceChildren();
@@ -306,7 +388,9 @@ async function loadCommunity() {
     }
 
     const loading = document.createElement('p');
+
     loading.textContent = 'Loading conversations...';
+
     communityList.append(loading);
 
     try {
@@ -371,7 +455,9 @@ function loadDemoCommunity() {
     communityList.replaceChildren();
 
     const notice = document.createElement('p');
+
     notice.className = 'community-demo-notice';
+
     notice.textContent =
         'Preview Mode: Showing sample conversations for testing.';
 
@@ -382,38 +468,59 @@ function loadDemoCommunity() {
 
 function createCommunityCard(chat) {
     const card = document.createElement('article');
+
     card.className = 'community-card';
 
     const title = document.createElement('h2');
+
     title.textContent = chat.title || 'Untitled Conversation';
 
     const author = document.createElement('p');
+
     author.className = 'community-byline';
-    author.textContent = `Shared by ${chat.username || 'Anonymous'}`;
+
+    author.textContent =
+        `Shared by ${chat.username || 'Anonymous'}`;
 
     const preview = document.createElement('p');
+
     preview.className = 'community-preview';
 
-    const firstMessage = chat.preview || chat.messages?.[0]?.content;
+    const firstMessage =
+        chat.preview || chat.messages?.[0]?.content;
 
-    if (typeof firstMessage === 'string' && firstMessage.trim()) {
+    if (
+        typeof firstMessage === 'string' &&
+        firstMessage.trim()
+    ) {
         preview.textContent = formatPreview(firstMessage);
+
     } else if (currentMode === 'real') {
         preview.textContent = 'Loading preview...';
-        loadMessagePreview(chat.id, preview, requestVersion);
+
+        loadMessagePreview(
+            chat.id,
+            preview,
+            requestVersion
+        );
+
     } else {
-        preview.textContent = 'No conversation preview available.';
+        preview.textContent =
+            'No conversation preview available.';
     }
 
     const footer = document.createElement('div');
+
     footer.className = 'community-card-footer';
 
     const date = document.createElement('span');
+
     date.textContent = formatTimestamp(
         chat.updatedAt || chat.createdAt
     );
 
     const viewButton = document.createElement('button');
+
     viewButton.type = 'button';
     viewButton.className = 'light';
     viewButton.textContent = 'View Conversation';
@@ -429,6 +536,7 @@ function createCommunityCard(chat) {
     });
 
     footer.append(date, viewButton);
+
     card.append(title, author, preview, footer);
 
     communityList.append(card);
@@ -436,6 +544,7 @@ function createCommunityCard(chat) {
 
 function formatPreview(content) {
     const text = content.replace(/\s+/g, ' ').trim();
+
     const maxLength = 200;
 
     return text.length > maxLength
@@ -443,7 +552,11 @@ function formatPreview(content) {
         : text;
 }
 
-async function loadMessagePreview(chatId, previewElement, version) {
+async function loadMessagePreview(
+    chatId,
+    previewElement,
+    version
+) {
     try {
         const messagesRef = collection(
             db,
@@ -476,7 +589,8 @@ async function loadMessagePreview(chatId, previewElement, version) {
         const firstMessage = snapshot.docs[0].data().content;
 
         previewElement.textContent =
-            typeof firstMessage === 'string' && firstMessage.trim()
+            typeof firstMessage === 'string' &&
+            firstMessage.trim()
                 ? formatPreview(firstMessage)
                 : 'No conversation preview available.';
 
@@ -495,32 +609,50 @@ async function loadMessagePreview(chatId, previewElement, version) {
 
 async function showPublicChat(chatId) {
     clearCommunityAnalysis();
+
     const detailVersion = detailRequestVersion;
     const version = requestVersion;
     const mode = currentMode;
-    const isCurrent = () => version === requestVersion &&
-        detailVersion === detailRequestVersion && mode === currentMode && !communityDetail.hidden;
+
+    const isCurrent = () =>
+        version === requestVersion &&
+        detailVersion === detailRequestVersion &&
+        mode === currentMode &&
+        !communityDetail.hidden;
 
     communityList.hidden = false;
     communityDetail.hidden = false;
+
     document.body.style.overflow = 'hidden';
 
     detailTitle.textContent = 'Loading conversation…';
+
     detailAuthor.textContent = '';
+    detailDate.textContent = '';
+
     communityMessages.replaceChildren();
+
     activeCommentPostId = null;
+
     commentsSection.hidden = true;
+
     commentList.replaceChildren();
+
     commentStatus.textContent = '';
 
     if (mode === 'demo') {
-        const demoChat = demoChats.find(chat => chat.id === chatId);
+        const demoChat = demoChats.find(
+            chat => chat.id === chatId
+        );
 
         if (demoChat) {
             displayDemoChat(demoChat);
         } else {
             detailTitle.textContent = 'Conversation unavailable';
-            showDetailMessage('This sample conversation was not found.');
+
+            showDetailMessage(
+                'This sample conversation was not found.'
+            );
         }
 
         return;
@@ -528,6 +660,7 @@ async function showPublicChat(chatId) {
 
     try {
         const chatRef = doc(db, 'chats', chatId);
+
         const chatSnapshot = await getDoc(chatRef);
 
         if (!isCurrent()) {
@@ -543,14 +676,29 @@ async function showPublicChat(chatId) {
             );
         }
 
-        const chat = {...chatSnapshot.data(), id: chatId};
+        const chat = {
+            ...chatSnapshot.data(),
+            id: chatId
+        };
+
         activeCommentPostId = chatId;
+
         commentsSection.hidden = false;
+
         updateCommentForm();
 
-        detailTitle.textContent = chat.title || 'Untitled Conversation';
+        // Display the original initial prompt.
+        detailTitle.textContent =
+            chat.prompt ||
+            chat.title ||
+            'Initial prompt unavailable.';
+
         detailAuthor.textContent =
             `Shared by ${chat.username || 'Anonymous'}`;
+
+        detailDate.textContent = formatTimestamp(
+            chat.createdAt || chat.updatedAt
+        );
 
         const messages = await getDocs(
             query(
@@ -564,17 +712,22 @@ async function showPublicChat(chatId) {
         }
 
         const transcript = [];
+
         if (messages.empty) {
             showDetailMessage('No messages available.');
+
         } else {
             messages.forEach(message => {
                 const data = message.data();
+
                 transcript.push(data);
+
                 createMessageRow(data);
             });
         }
 
         selectCommunityAnalysis(chat, transcript);
+
         await loadComments(chatId);
 
     } catch (error) {
@@ -587,7 +740,8 @@ async function showPublicChat(chatId) {
         detailTitle.textContent = 'Conversation unavailable';
 
         showDetailMessage(
-            error.message === 'This conversation is private or unavailable.' ||
+            error.message ===
+                'This conversation is private or unavailable.' ||
             error.code === 'permission-denied'
                 ? 'This conversation is private or unavailable.'
                 : 'Could not load this conversation.'
@@ -595,10 +749,41 @@ async function showPublicChat(chatId) {
     }
 }
 
+function displayDemoChat(chat) {
+    detailTitle.textContent =
+        chat.prompt ||
+        chat.title ||
+        'Initial prompt unavailable.';
+
+    detailAuthor.textContent =
+        `Shared by ${chat.username}`;
+
+    detailDate.textContent = formatTimestamp(
+        chat.createdAt || chat.updatedAt
+    );
+
+    activeCommentPostId = null;
+
+    commentsSection.hidden = true;
+
+    communityMessages.replaceChildren();
+
+    chat.messages.forEach(message => {
+        createMessageRow(message);
+    });
+
+    selectCommunityAnalysis(chat, chat.messages);
+}
+
 function updateCommentForm() {
     const signedIn = Boolean(auth.currentUser);
+
     commentInput.disabled = !signedIn;
-    commentForm.querySelector('button[type="submit"]').disabled = !signedIn;
+
+    commentForm.querySelector(
+        'button[type="submit"]'
+    ).disabled = !signedIn;
+
     commentInput.placeholder = signedIn
         ? 'Write a comment…'
         : 'Sign in to join the conversation';
@@ -608,85 +793,126 @@ async function loadComments(postId) {
     commentList.replaceChildren();
 
     try {
-        const snapshot = await getDocs(query(
-            collection(db, 'comments'),
-            where('postId', '==', postId)
-        ));
+        const snapshot = await getDocs(
+            query(
+                collection(db, 'comments'),
+                where('postId', '==', postId)
+            )
+        );
 
         if (activeCommentPostId !== postId) return;
+
         if (snapshot.empty) {
             const empty = document.createElement('p');
+
             empty.textContent = 'No comments yet.';
+
             commentList.append(empty);
+
             return;
         }
 
         snapshot.docs
-            .sort((a, b) => timestampMillis(a.data().createdAt) - timestampMillis(b.data().createdAt))
+            .sort((a, b) =>
+                timestampMillis(a.data().createdAt) -
+                timestampMillis(b.data().createdAt)
+            )
             .forEach(item => {
                 const data = item.data();
+
                 const card = document.createElement('article');
+
                 card.className = 'community-comment';
 
                 const author = document.createElement('strong');
-                author.textContent = data.username || 'Anonymous';
+
+                author.textContent =
+                    data.username || 'Anonymous';
 
                 const body = document.createElement('p');
+
                 body.textContent = data.comment || '';
 
                 const time = document.createElement('time');
+
                 time.textContent = formatTimestamp(data.createdAt);
 
                 card.append(author, body, time);
+
                 commentList.append(card);
             });
+
     } catch (error) {
         console.error('Could not load comments:', error);
+
         if (activeCommentPostId === postId) {
             const message = document.createElement('p');
-            message.textContent = 'Comments could not be loaded.';
+
+            message.textContent =
+                'Comments could not be loaded.';
+
             commentList.append(message);
         }
     }
 }
 
-function displayDemoChat(chat) {
-    detailTitle.textContent = chat.title;
-    detailAuthor.textContent = `Shared by ${chat.username}`;
-    activeCommentPostId = null;
-    commentsSection.hidden = true;
-
-    communityMessages.replaceChildren();
-
-    chat.messages.forEach(message => {
-        createMessageRow(message);
-    });
-    selectCommunityAnalysis(chat, chat.messages);
-}
-
 function createMessageRow(data) {
     const row = document.createElement('article');
+
     row.className = 'run-message';
+    // Model A blue, Model B purple, humans green.
+
+    const sender = String(data.agentId || '').trim();
+
+    const role = String(data.role || '').trim();
+
+    const isHuman =
+        /^(human|user|moderator)$/i.test(sender) ||
+        /^(human|user|moderator)$/i.test(role);
+
+    if (isHuman) {
+        row.classList.add('message-human');
+
+    } else {
+        const modelKey = sender || role || 'assistant';
+
+        if (!communityModelNames.has(modelKey)) {
+            communityModelNames.set(
+                modelKey,
+                communityModelNames.size
+            );
+        }
+
+        if (communityModelNames.get(modelKey) % 2 === 1) {
+            row.classList.add('message-model-b');
+        }
+    }
 
     const byline = document.createElement('div');
+
     byline.className = 'run-message-byline';
 
     byline.textContent =
         `${data.agentId ? `${data.agentId} · ` : ''}${data.role || 'message'}`;
 
     const content = document.createElement('p');
+
     content.textContent = data.content || '';
 
     const time = document.createElement('time');
+
     time.textContent = formatTimestamp(data.timestamp);
 
     row.append(byline, content, time);
+
     communityMessages.append(row);
 }
 
 function showMessage(message) {
     const paragraph = document.createElement('p');
+
     paragraph.className = 'community-demo-notice';
+
     paragraph.textContent = message;
 
     communityList.append(paragraph);
@@ -694,6 +920,7 @@ function showMessage(message) {
 
 function showDetailMessage(message) {
     const paragraph = document.createElement('p');
+
     paragraph.textContent = message;
 
     communityMessages.append(paragraph);
@@ -712,21 +939,36 @@ function timestampMillis(value) {
 }
 
 function formatTimestamp(timestamp) {
+    let date;
+
     if (timestamp?.toDate) {
-        return timestamp.toDate().toLocaleString();
+        date = timestamp.toDate();
+
+    } else if (timestamp instanceof Date) {
+        date = timestamp;
+
+    } else {
+        return 'Date unavailable';
     }
 
-    if (timestamp instanceof Date) {
-        return timestamp.toLocaleString();
+    if (Number.isNaN(date.getTime())) {
+        return 'Date unavailable';
     }
 
-    return 'Date unavailable';
+    return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+    });
 }
+
 
 window.addEventListener('popstate', () => {
     document.body.style.overflow = '';
+
     loadCommunity();
 });
 
 updateModeButtons();
+
 loadCommunity();

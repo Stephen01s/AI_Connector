@@ -1,69 +1,139 @@
-
 <!DOCTYPE html>
-<html lang = "en">
+<html lang="en">
 <head>
-    <meta charset = "UTF-8">
-    <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Community — Jash</title>
-    <link rel = "stylesheet" href = "../css/styles.css?v=selected-analysis-1">
+    <link rel="stylesheet" href="../css/styles.css?v=community-initial-prompt-1">
 </head>
 
 <body>
-    <div class = "app-shell">
-        <header class = "topbar">
-            <div class = "brand">
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
                 <span class="brand-mark">◈</span> Jash
             </div>
-            <nav class = "nav-links" aria-label = "Main navigation">
-                <button type = "button" data-page = "index.html">⌂&nbsp; Home</button>
-                <button type = "button" data-page = "runs.html">◌&nbsp; Runs</button>
-                <button type = "button" data-page = "community.html" aria-current = "page">♧&nbsp; Community</button>            </nav>
-            <button type = "button" class = "theme-toggle" id = "theme-toggle" aria-label = "Toggle dark mode">☾</button>
+
+            <nav class="nav-links" aria-label="Main navigation">
+                <button type="button" data-page="index.html">⌂&nbsp; Home</button>
+                <button type="button" data-page="runs.html">◌&nbsp; Runs</button>
+                <button type="button" data-page="community.html" aria-current="page">♧&nbsp; Community</button>
+            </nav>
+
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">☾</button>
+
             <div class="account-actions" id="account-actions">
                 <button class="sign-in" id="user-settings" type="button">User Settings</button>
                 <button class="sign-in" id="sign-out" type="button">Sign Out</button>
                 <button class="sign-in" id="sign-in-nav" type="button" hidden>Sign In</button>
             </div>
         </header>
-        <main class = "community-main">
-            <div class = "community-header">
-                <div class = "page-heading">
+
+        <main class="community-main">
+            <div class="community-header">
+                <div class="page-heading">
                     <h1>Community</h1>
                     <p>See conversations shared by the community</p>
                 </div>
-                <div class = "community-mode-switch">
-                    <button id = "community-real-btn" type = "button" class = "community-mode-btn active" aria-pressed = "true">Community</button>
-                    <button id = "community-demo-btn" type = "button" class = "community-mode-btn" aria-pressed = "false">Preview</button>
+
+                <div class="community-mode-switch">
+                    <button id="community-real-btn" type="button" class="community-mode-btn active" aria-pressed="true">Community</button>
+                    <button id="community-demo-btn" type="button" class="community-mode-btn" aria-pressed="false">Preview</button>
                 </div>
             </div>
-            <div id = "community-list" aria-live = "polite"></div>
+
+            <div id="community-list" aria-live="polite"></div>
         </main>
-        <section id = "community-detail" role = "dialog" aria-modal = "true" aria-labelledby = "community-detail-title" hidden>
-            <div class = "community-popup-content">
-                <button id = "community-back" type = "button" class = "light">✕ Close</button>
-                <div class = "run-detail-heading">
-                    <h2 id = "community-detail-title"></h2>
-                    <button id = "analyze-community" class = "light analysis-trigger" type = "button" hidden disabled>Analyze conversation</button>
-                </div>
-                <p id = "community-detail-author"></p>
-                <div id = "community-messages"></div>
-                <section id="community-comments" aria-labelledby="community-comments-title" hidden>
+
+        <section
+            id="community-detail"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="community-detail-title"
+            hidden
+        >
+            <div class="community-popup-content">
+
+                <button
+                    id="community-back"
+                    type="button"
+                    class="light community-popup-close"
+                    aria-label="Close conversation"
+                >✕</button>
+
+                <header class="community-popup-header">
+
+                    <div class="community-initial-prompt">
+                        <div class="community-initial-prompt-label">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5z"/>
+                            </svg>
+                            <span>INITIAL PROMPT</span>
+                        </div>
+
+                        <h2 id="community-detail-title"></h2>
+                    </div>
+
+                    <div class="community-popup-meta-row">
+
+                        <div class="run-detail-metadata community-popup-metadata">
+                            <span id="community-detail-author"></span>
+                            <span id="community-detail-date"></span>
+                        </div>
+
+                        <button
+                            id="analyze-community"
+                            class="light analysis-trigger"
+                            type="button"
+                            hidden
+                            disabled
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M5 19v-4"/>
+                                <path d="M10 19v-8"/>
+                                <path d="M15 19V7"/>
+                                <path d="M20 19V4"/>
+                            </svg>
+                            <span class="analysis-trigger-label">View Analysis</span>
+                        </button>
+
+                    </div>
+                </header>
+
+                <div id="community-messages"></div>
+
+                <section
+                    id="community-comments"
+                    aria-labelledby="community-comments-title"
+                    hidden
+                >
                     <h3 id="community-comments-title">Comments</h3>
+
                     <div id="community-comment-list" aria-live="polite"></div>
+
                     <form id="community-comment-form">
                         <label for="community-comment-input">Add a comment</label>
-                        <textarea id="community-comment-input" rows="3" maxlength="2000" required></textarea>
+
+                        <textarea
+                            id="community-comment-input"
+                            rows="3"
+                            maxlength="2000"
+                            required
+                        ></textarea>
+
                         <button type="submit">Post comment</button>
                         <p id="community-comment-status" role="status"></p>
                     </form>
                 </section>
+
             </div>
         </section>
     </div>
-    <script defer src = "../javascript/theme.js" ></script>
-    <script defer src = "../javascript/api-config.js?v=1"></script>
-    <script defer src = "../javascript/api-keys.js?v=observer-1"></script>
-    <script defer src = "../javascript/analysis.js?v=3"></script>
-    <script type = "module" src = "../javascript/community.js?v=selected-analysis-2"></script>
+
+    <script defer src="../javascript/theme.js"></script>
+    <script defer src="../javascript/api-config.js?v=1"></script>
+    <script defer src="../javascript/api-keys.js?v=observer-1"></script>
+    <script defer src="../javascript/analysis.js?v=3"></script>
+    <script type="module" src="../javascript/community.js?v=community-initial-prompt-1"></script>
 </body>
 </html>

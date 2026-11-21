@@ -50,7 +50,6 @@ footer span {
 .nav-links {
   display: flex;
   gap: 18px;
-  margin: auto;
 }
 
 .nav-links button,
@@ -80,18 +79,6 @@ main {
 
 .screen.active {
   display: block;
-}
-
-.page-heading h1 {
-  font-size: 18px;
-  margin: 0 0 3px;
-  font-weight: 750;
-}
-
-.page-heading p {
-  color: #777f8b;
-  margin: 0;
-  font-size: 10px;
 }
 
 .setup-layout,
@@ -192,7 +179,6 @@ button {
   margin-top: 3px;
 }
 
-
 /* Interactive states for the existing controls */
 input:focus-visible,
 select:focus-visible,
@@ -257,7 +243,6 @@ a:focus-visible {
     line-height: 1;
     font-weight: 400;
 }
-
 
 /* Conversation and review layout */
 .conversation-layout,
@@ -738,7 +723,6 @@ footer span {
   color: #4d5460;
 }
 
-
 /* Runs page confirmation dialogs */
 .run-confirm-overlay {
   position: fixed;
@@ -883,7 +867,6 @@ footer span {
   background: #a63842;
   color: #ffffff;
 }
-
 
 .data-preview {
   margin-top: 18px;
@@ -1280,7 +1263,6 @@ footer span {
   font-weight: 700;
   margin-bottom: 18px;
 }
-
 
 /* Runs: streamlined selected conversation header */
 .run-detail-panel.has-selected-run .run-detail-heading {
@@ -1774,14 +1756,6 @@ footer span {
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-}
-
-/* Conversation messages */
-#community-messages {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 20px;
 }
 
 /* Individual message */
@@ -2294,8 +2268,6 @@ body .nav-links {
   opacity: 1;
 }
 
-
-
 /* Dark mode: Runs cards, conversation header, and empty state */
 .dark-mode .run-card-wrap {
   background: #202936;
@@ -2347,18 +2319,14 @@ body .nav-links {
   border-color: #84565b;
 }
 
-
 .dark-mode .run-detail-empty { color: #aeb7c6; }
 .dark-mode .run-detail-empty-icon { background: #303b4d; color: #a9bde7; }
 .dark-mode .run-detail-empty-title { color: #e6e9ef; }
-
-
 
 .dark-mode .runs-list-panel h2,
 .dark-mode .run-detail-panel h2 {
   color: #e6e9ef;
 }
-
 
 /* Dark mode - improved readability */
 .dark-mode .run-list-card strong {
@@ -2368,8 +2336,6 @@ body .nav-links {
 .dark-mode .run-list-card small {
     color: #aabbd4;
 }
-
-
 
 .dark-mode .run-detail-panel.has-selected-run .run-detail-heading {
   border-bottom-color: #39414e;
@@ -2383,8 +2349,6 @@ body .nav-links {
   color: #aeb7c6;
 }
 
-
-
 /* Dark mode: Runs View Analysis button */
 .dark-mode .run-detail-heading .analysis-trigger {
   background: #536687;
@@ -2395,4 +2359,260 @@ body .nav-links {
 .dark-mode .run-detail-heading .analysis-trigger:hover:not(:disabled) {
   background: #536f9b;
   border-color: #8ca7d4;
+}
+
+/* ==========================================
+   COMMUNITY POPUP — INITIAL PROMPT HEADER
+   ========================================== */
+
+/* Keep the popup at its original narrower width */
+#community-detail:not([hidden]) > .community-popup-content {
+    position: relative;
+    width: calc(100% - 32px);
+    max-width: 700px;
+    max-height: 85vh;
+    padding: 26px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.community-popup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+
+    transition: background-color 0.2s ease;
+}
+
+.community-popup-close:hover {
+    background: rgba(100, 116, 139, 0.12);
+}
+
+/* Header */
+.community-popup-header {
+    padding: 8px 0 18px;
+    border-bottom: 1px solid #dce2eb;
+}
+
+/* Initial prompt label */
+.community-initial-prompt-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-bottom: 10px;
+
+    color: #647b9e;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 1.3px;
+    line-height: 1.4;
+}
+
+.community-initial-prompt-label svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Main initial prompt title */
+#community-detail-title {
+    margin: 0;
+
+    color: #172b4d;
+
+    font-size: 21px;
+    line-height: 1.4;
+    letter-spacing: -0.3px;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+/* Author, date, and analysis button */
+.community-popup-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-top: 15px;
+}
+
+.community-popup-metadata {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+
+    margin: 0;
+
+    color: #718099;
+    font-size: 12px;
+}
+
+#community-detail-author,
+#community-detail-date {
+    margin: 0;
+}
+
+/* Runs-style View Analysis button */
+.community-popup-meta-row .analysis-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 36px;
+
+    margin: 0;
+    padding: 8px 12px;
+
+    border: 1px solid #536687;
+    border-radius: 7px;
+
+    background: #536687;
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.community-popup-meta-row .analysis-trigger:hover:not(:disabled) {
+    background: #405474;
+    border-color: #405474;
+}
+
+.community-popup-meta-row .analysis-trigger svg {
+    display: block;
+
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.community-popup-meta-row .analysis-trigger[hidden] {
+    display: none;
+}
+
+/* Conversation messages */
+#community-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+/* Dark mode */
+.dark-mode .community-popup-content {
+    background: #252a34;
+    color: #e6e9ef;
+    border-color: #414958;
+}
+
+.dark-mode .community-popup-header {
+    border-bottom-color: #414958;
+}
+
+.dark-mode .community-initial-prompt-label {
+    color: #a9bde7;
+}
+
+.dark-mode #community-detail-title {
+    color: #e6e9ef;
+}
+
+.dark-mode .community-popup-metadata {
+    color: #aeb7c6;
+}
+
+.dark-mode .community-popup-close {
+    background: transparent;
+    color: #d7dce5;
+    border: none;
+}
+
+.dark-mode .community-popup-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .community-popup-meta-row .analysis-trigger {
+    background: #536687;
+    border-color: #718bb8;
+    color: #ffffff;
+}
+
+.dark-mode .community-popup-meta-row .analysis-trigger:hover:not(:disabled) {
+    background: #536f9b;
+    border-color: #8ca7d4;
+}
+
+/* Mobile adjustments */
+@media (max-width: 650px) {
+    #community-detail:not([hidden]) {
+        padding: 10px;
+    }
+
+    #community-detail:not([hidden]) > .community-popup-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        padding: 20px;
+    }
+
+    .community-popup-header {
+        padding-top: 10px;
+    }
+
+    #community-detail-title {
+        font-size: 19px;
+    }
+
+    .community-popup-meta-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
