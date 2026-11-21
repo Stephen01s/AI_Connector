@@ -22,6 +22,9 @@ const status = document.querySelector('#runs-status');
 const runsList = document.querySelector('#runs-list');
 const runMessages = document.querySelector('#run-messages');
 const detailTitle = document.querySelector('#run-detail-title');
+const detailMetadata = document.querySelector('#run-detail-metadata');
+const detailDate = document.querySelector('#run-detail-date');
+const detailVisibility = document.querySelector('#run-detail-visibility');
 const detailEmpty = document.querySelector('#run-detail-empty');
 const detailPanel = document.querySelector('.run-detail-panel');
 
@@ -40,13 +43,29 @@ let selectedChat = null;
 let selectedMessages = [];
 let selectionVersion = 0;
 
+function updateDetailMetadata(chat) {
+    if (!chat) {
+        detailMetadata.hidden = true;
+        return;
+    }
+
+    detailDate.textContent = formatTimestamp(chat.updatedAt || chat.createdAt);
+    const isPublic = chat.isPublic === true;
+    detailVisibility.innerHTML = isPublic
+        ? `${globeIcon()}<span>Public</span>`
+        : `${lockIcon()}<span>Private</span>`;
+    detailVisibility.classList.toggle('is-public', isPublic);
+    detailMetadata.hidden = false;
+}
+
 function clearAnalysisSelection() {
     ++selectionVersion;
     selectedChat = null;
     selectedMessages = [];
+    updateDetailMetadata(null);
     analysisButton.hidden = true;
     analysisButton.disabled = true;
-    analysisButton.textContent = 'Analyze conversation';
+    analysisButton.querySelector('span').textContent = 'View Analysis';
 }
 
 analysisButton.addEventListener('click', async () => {
@@ -63,7 +82,7 @@ analysisButton.addEventListener('click', async () => {
             // Retain the report in this page even if saving it is unavailable.
             chat.analysis = report;
             chat.model_a_model = report.model;
-            if (selectedChat === chat) analysisButton.textContent = 'View analysis';
+            if (selectedChat === chat) analysisButton.querySelector('span').textContent = 'View Analysis';
             await updateDoc(doc(db, 'chats', chat.id), {
                 analysis: report,
                 model_a_model: report.model
@@ -78,35 +97,30 @@ document.querySelectorAll('[data-page]').forEach(button => {
     });
 });
 
-// Custom confirmation dialog for sharing, unsharing, and deleting
-function confirmRunAction({ title, message, confirmText, icon, danger = false }) {
+// Reusable confirmation dialog for Runs actions
+function confirmRunAction({ title, description, action, icon, danger = false }) {
     return new Promise(resolve => {
-        const overlay = document.createElement('div');
-        overlay.className = 'run-confirm-overlay';
-
-        const dialog = document.createElement('div');
-        dialog.className = 'run-confirm-dialog';
-        dialog.setAttribute('role', 'alertdialog');
-        dialog.setAttribute('aria-modal', 'true');
+        const dialog = document.createElement('dialog');
+        dialog.className = 'sign-in-dialog run-confirm-dialog';
 
         const heading = document.createElement('div');
         heading.className = 'run-confirm-heading';
         heading.innerHTML = icon;
 
-        const titleElement = document.createElement('h3');
+        const titleElement = document.createElement('h2');
         titleElement.textContent = title;
         heading.append(titleElement);
 
-        const description = document.createElement('p');
-        description.className = 'run-confirm-message';
-        description.textContent = message;
+        const message = document.createElement('p');
+        message.className = 'run-confirm-description';
+        message.textContent = description;
 
         const actions = document.createElement('div');
-        actions.className = 'run-confirm-actions';
+        actions.className = 'dialog-actions';
 
         const cancelButton = document.createElement('button');
         cancelButton.type = 'button';
-        cancelButton.className = 'run-confirm-cancel';
+        cancelButton.className = 'light';
         cancelButton.textContent = 'Cancel';
 
         const confirmButton = document.createElement('button');
@@ -114,46 +128,24 @@ function confirmRunAction({ title, message, confirmText, icon, danger = false })
         confirmButton.className = danger
             ? 'run-confirm-submit is-danger'
             : 'run-confirm-submit';
-        confirmButton.textContent = confirmText;
+        confirmButton.textContent = action;
 
         actions.append(cancelButton, confirmButton);
-        dialog.append(heading, description, actions);
-        overlay.append(dialog);
+        dialog.append(heading, message, actions);
+        document.body.append(dialog);
 
-        const previousFocus = document.activeElement;
-
-        function close(confirmed) {
-            document.removeEventListener('keydown', onKeyDown);
-            overlay.remove();
-            previousFocus?.focus?.();
-            resolve(confirmed);
-        }
-
-        function onKeyDown(event) {
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                close(false);
-            } else if (event.key === 'Tab') {
-                const focusable = [cancelButton, confirmButton];
-                const currentIndex = focusable.indexOf(document.activeElement);
-                if (event.shiftKey && currentIndex === 0) {
-                    event.preventDefault();
-                    confirmButton.focus();
-                } else if (!event.shiftKey && currentIndex === focusable.length - 1) {
-                    event.preventDefault();
-                    cancelButton.focus();
-                }
-            }
-        }
-
-        cancelButton.addEventListener('click', () => close(false));
-        confirmButton.addEventListener('click', () => close(true));
-        overlay.addEventListener('click', event => {
-            if (event.target === overlay) close(false);
+        let confirmed = false;
+        cancelButton.addEventListener('click', () => dialog.close());
+        confirmButton.addEventListener('click', () => {
+            confirmed = true;
+            dialog.close();
         });
+        dialog.addEventListener('close', () => {
+            dialog.remove();
+            resolve(confirmed);
+        }, { once: true });
 
-        document.body.append(overlay);
-        document.addEventListener('keydown', onKeyDown);
+        dialog.showModal();
         cancelButton.focus();
     });
 }
@@ -277,6 +269,10 @@ async function loadRuns() {
                 isPublic
             );
 
+            if (selectedChat?.id === chat.id) {
+                updateDetailMetadata(chat);
+            }
+
             visibilityButton.innerHTML = isPublic
                 ? `${lockIcon()}<span>Make Private</span>`
                 : `${globeIcon()}<span>Make Public</span>`;
@@ -304,17 +300,20 @@ async function loadRuns() {
             event.stopPropagation();
 
             const isPublic = chat.isPublic !== true;
-
-            const confirmed = await confirmRunAction({
-                title: isPublic
-                    ? 'Share conversation to Community?'
-                    : 'Make this conversation private?',
-                message: isPublic
-                    ? 'Other users will be able to view this conversation on the Community page.'
-                    : 'This conversation will be removed from Community but will remain saved in Your Runs.',
-                confirmText: isPublic ? 'Make Public' : 'Make Private',
-                icon: isPublic ? globeIcon() : lockIcon()
-            });
+            const confirmed = await confirmRunAction(isPublic
+                ? {
+                    title: 'Share conversation to Community?',
+                    description: 'Other users will be able to view this conversation on the Community page.',
+                    action: 'Make Public',
+                    icon: globeIcon()
+                }
+                : {
+                    title: 'Make this conversation private?',
+                    description: 'This conversation will be removed from Community but will remain saved in Your Runs.',
+                    action: 'Make Private',
+                    icon: lockIcon()
+                }
+            );
 
             if (!confirmed) return;
 
@@ -367,8 +366,8 @@ async function loadRuns() {
 
             const confirmed = await confirmRunAction({
                 title: 'Delete this conversation?',
-                message: 'This will permanently delete the saved conversation and its messages. This action cannot be undone.',
-                confirmText: 'Delete Conversation',
+                description: 'This will permanently delete the saved conversation and its messages. This action cannot be undone.',
+                action: 'Delete Conversation',
                 icon: trashIcon(),
                 danger: true
             });
@@ -464,6 +463,7 @@ async function selectRun(chat) {
 
     // Update conversation title
     detailTitle.textContent = chat.title || 'Untitled run';
+    updateDetailMetadata(chat);
 
     // Add the background only for selected conversations
     detailPanel.classList.add('has-selected-run');
@@ -563,7 +563,7 @@ async function selectRun(chat) {
     analysisButton.disabled = !selectedMessages.length;
     if (chat.analysis?.message_count === selectedMessages.length &&
         typeof chat.analysis.text === 'string') {
-        analysisButton.textContent = 'View analysis';
+        analysisButton.querySelector('span').textContent = 'View Analysis';
     }
 }
 
